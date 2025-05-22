@@ -5,13 +5,10 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function App() {
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: "Home"}}/>
+      <Stack.Screen options={{ headerShown: true, title: "Home > Details"}}/>
       <View style={styles.container}>
-        <Text style={{ fontSize: 24 }}>Index of Home Tab</Text>
+        <Text style={{ fontSize: 24 }}>Detail Page of Home Tab</Text>
         <StatusBar style="auto" />
-        <Link href="/home/detail-page">
-          <Text>Goto Details Page</Text>
-        </Link>
       </View>
     </>
   );
