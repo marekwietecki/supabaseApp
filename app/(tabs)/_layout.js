@@ -12,11 +12,11 @@ export default function TabsLayout() {
           color={color}
         />
       ) }}  />
-      <Tabs.Screen name="settings" options={{ tabBarLabel: "Settings", title: "Settings" , tabBarIcon: ({ color }) => (
+      <Tabs.Screen name="profile" options={{ tabBarLabel: "Profile", title: "Profile" , tabBarIcon: ({ color }) => (
         <FontAwesome
           size={28}
           style={{marginBottom: -3}}
-          name="gear"
+          name="male"
           color={color}
         />
       ) }} />
