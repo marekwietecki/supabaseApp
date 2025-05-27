@@ -3,6 +3,8 @@ import { StyleSheet, View, Text, SectionList, TouchableOpacity, Dimensions, Aler
 import { useRouter, Link, Stack } from 'expo-router';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+
 
 export default function HomeScreen() {
   const [storeFilter, setStoreFilter] = useState('');
@@ -14,6 +16,8 @@ export default function HomeScreen() {
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
 
   const router = useRouter();
+  
+
 
   // 🔥 Global fetchProducts function
   async function fetchProducts(userId) {
@@ -134,7 +138,7 @@ export default function HomeScreen() {
                     storeFilter === '' && styles.activeFilterText,
                   ]}
                 >
-                  Pokaż wszystkie
+                  Wszystkie Sklepy
                 </Text>
               </TouchableOpacity>
 
@@ -161,25 +165,34 @@ export default function HomeScreen() {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
-                <View style={{ flex: 1, paddingRight: 10, flexDirection: 'row', gap: 16 }}>
-                  <TouchableOpacity onPress={() => toggleBoughtHandler(item.id, item.is_purchased)}>
-                    <Text
-                      style={[styles.itemText, item.is_purchased && styles.bought]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {/* Lewa część – przycisk do toggle'owania statusu zakupienia */}
+                <TouchableOpacity
+                  onPress={() => toggleBoughtHandler(item.id, item.is_purchased)}
+                  style={styles.itemRow}  // Używamy nowego stylu: rząd z ikoną i tekstem
+                >
+                  {item.is_purchased ? (
+                    <FontAwesome name="check-square" size={24} color="green" style={styles.itemIcon} />
+                  ) : (
+                    <FontAwesome name="square-o" size={24} color="gray" style={styles.itemIcon} />
+                  )}
+                  <Text
+                    style={[styles.itemText, item.is_purchased && styles.bought]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Prawa część – przyciski informacje/usuwania */}
                 <View style={{ flexDirection: 'row', gap: 16 }}>
-                  <Link href={`/(tabs)/details?id=${item.id}`} asChild>
+                  <Link href={`/(tabs)/listaa/${item.id}`} asChild>
                     <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <MaterialIcons name="info-outline" size={22} color="#2196F3" />
+                      <MaterialIcons name="info-outline" size={24} color="#2196F3" />
                     </TouchableOpacity>
                   </Link>
                   <TouchableOpacity onPress={() => removeProductHandler(item.id)}>
-                    <MaterialIcons name="close" size={24} color="#dc2020" />
+                    <MaterialIcons name="close" size={28} color="#dc2020" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -243,7 +256,7 @@ const styles = StyleSheet.create({
     paddingRight: 8, paddingBottom: 8 
   },
   filterBox: {
-    backgroundColor: 'blue',
+    backgroundColor: '#EAF5FD',
     padding: 8,
     borderRadius: 16,
     marginVertical: 12,
@@ -272,14 +285,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
+    paddingHorizontal: 7,
     borderBottomWidth: 1,
+    borderColor: '#E6E6E9',
     alignItems: 'center',
   },
   itemText: { 
-    fontSize: 16 
+    fontSize: 20,
+    color: '#555555',
+    paddingBottom: 3,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Styl dla ikony przy produkcie
+  itemIcon: {
+    marginRight: 8,
   },
   bought: { 
     textDecorationLine: 'line-through',
-    color: 'gray' 
+    color: '#BBBBBB' 
   },
 });

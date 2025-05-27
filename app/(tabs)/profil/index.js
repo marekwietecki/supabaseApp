@@ -26,20 +26,20 @@ export default function App() {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <Stack.Screen options={{ headerShown: true, title: "Profile"}}/>
+      <Stack.Screen options={{ headerShown: true, title: "Profil"}}/>
       <View style={styles.container}>
         <StatusBar style="auto" />
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 16}}>  
+        <View style={{flexDirection: 'column', alignItems: 'center', gap: 16}}>  
           <FontAwesome
-            size={40}
+            size={80}
             style={{marginBottom: -3}}
             name="user"
-            color='black'
+            color='gray'
           />
           <Text style={{ fontSize: 20, fontWeight: 700 }}>{user?.email}</Text>
         </View>
         {/*<Text style={{fontSize: 8}}>{JSON.stringify(user, null, 2)}</Text> */}
-        <Link href="/profile/user-details">
+        <Link href="/profil/user-details">
           <FontAwesome
             size={16}
             name="info-circle"
@@ -50,12 +50,6 @@ export default function App() {
         <TouchableOpacity onPress={doLogout} style={styles.buttonContainer}>
           <Text style={styles.buttonText}>Log Out</Text>
         </TouchableOpacity>
-        <Link href="/settings/ACCOUNT">
-          <Text>Go to Account Settings</Text>
-        </Link>
-        <Link href="/settings/NETWORK">
-          <Text>Go to Network Settings</Text>
-        </Link>
       </View>
     </SafeAreaView>
   );
@@ -67,6 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8
   },
    buttonText: {
     alignSelf: 'center',
@@ -82,5 +77,3 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
 });
-
- 

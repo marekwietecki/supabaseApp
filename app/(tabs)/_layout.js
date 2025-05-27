@@ -4,7 +4,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="list" options={{ tabBarLabel: "List", title: "list", tabBarIcon: ({ color }) => (
+      <Tabs.Screen name="lista" options={{ tabBarLabel: "Lista", title: "lista", tabBarIcon: ({ color }) => (
         <FontAwesome
           size={24}
           style={{marginBottom: -3}}
@@ -12,7 +12,7 @@ export default function TabsLayout() {
           color={color}
         />
       ) }}  />
-      <Tabs.Screen name="add" options={{ tabBarLabel: "Add", title: "Add" , tabBarIcon: ({ color }) => (
+      <Tabs.Screen name="dodaj" options={{ tabBarLabel: "Dodaj", title: "Dodaj" , tabBarIcon: ({ color }) => (
         <FontAwesome
           size={24}
           style={{marginBottom: -3}}
@@ -20,7 +20,15 @@ export default function TabsLayout() {
           color={color}
         />
       ) }} />
-      <Tabs.Screen name="profile" options={{ tabBarLabel: "Profile", title: "Profile" , tabBarIcon: ({ color }) => (
+      <Tabs.Screen name="listaa" options={{ tabBarLabel: "Listaa", title: "Listaa" , tabBarIcon: ({ color }) => (
+        <FontAwesome
+          size={24}
+          style={{marginBottom: -3}}
+          name="info-circle"
+          color={color}
+        />
+      ) }} />
+      <Tabs.Screen name="profil" options={{ tabBarLabel: "Profil", title: "Profil" , tabBarIcon: ({ color }) => (
         <FontAwesome
           size={24}
           style={{marginBottom: -3}}

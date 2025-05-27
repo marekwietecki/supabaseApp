@@ -19,7 +19,7 @@ export default function App() {
   
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: "Profile > Details"}}/>
+      <Stack.Screen options={{ headerShown: true, title: "Profil > Szczegóły"}}/>
       <View style={styles.container}>
         <Text style={{fontSize: 8}}>{JSON.stringify(user, null, 2)}</Text>
         <StatusBar style="auto" />

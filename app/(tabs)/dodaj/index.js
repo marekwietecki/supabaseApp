@@ -28,11 +28,12 @@ export default function App() {
     return;
   }
 
+  const formattedPrice = parseFloat(productPrice.replace(',', '.')).toFixed(2); // 🔥 Zamienia przecinek na kropkę + wymusza precyzję
   const newProduct = {
     name: productName,
-    price: parseFloat(productPrice),
+    price: Number(formattedPrice), // 🔥 Teraz zapisuje się poprawnie
     store: productStore,
-    creator_id: session.user.id, 
+    creator_id: session.user.id,
   };
 
   const { error } = await supabase.from('products').insert([newProduct]);
