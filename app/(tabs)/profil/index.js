@@ -66,14 +66,16 @@ const styles = StyleSheet.create({
    buttonText: {
     alignSelf: 'center',
     fontSize: 20,
-    fontWeight: '600',
-    color: 'white',
+    fontWeight: '700',
+    color: 'black',
   },
   buttonContainer: {
-    paddingHorizontal: 40,
-    paddingVertical: 12,
-    backgroundColor: '#2497D5',
-    borderRadius: 24,
+    paddingHorizontal: 34,
+    paddingVertical: 10,
+    //backgroundColor: '#2497D5',
+    borderRadius: 36,
     marginVertical: 16,
+    borderWidth: 4,              // 🔹 Widoczna obwódka
+    borderColor: "#dc2020",
   },
 });

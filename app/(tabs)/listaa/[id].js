@@ -37,7 +37,7 @@ export default function ProductDetailsScreen() {
             size={20}
             style={{marginBottom: 0}}
             name="chevron-left"
-            color={'#007AFF'}
+            color={'#2196F3'}
           />
           {/*<Text style={styles.headerButtonText}>Szczegóły</Text>*/}
         </TouchableOpacity>
@@ -72,20 +72,22 @@ useEffect(() => {
 }, [id]);
 
   useEffect(() => {
-    if (product) {
-      navigation.setOptions({
-      title: `${product.name}`,
-      headerTitleAlign: 'center',
+  if (product) {
+    navigation.setOptions({
+      title: `${product.name}`, 
+      headerTitleAlign: 'center',  // ✅ Najprostszy sposób na iOS + może działać na Androidzie
       headerTitleContainerStyle: {
-        left: 0,
-        right: 0,
+        flex: 1,                   // ✅ Powoduje automatyczne wyśrodkowanie na Androidzie
+        alignItems: 'center',       // ✅ Zapewnia, że cały kontener jest wyśrodkowany
+        
       },
       headerTitleStyle: {
-        textAlign: 'center',
+        textAlign: 'center',        // ✅ Wymusza wyśrodkowanie tekstu
+        fontWeight: 'bold',         // 🔹 Opcjonalnie: pogrubienie dla lepszej czytelności
       },
     });
-    }
-  }, [product, navigation]);
+  }
+}, [product, navigation]);
 
   if (!product) {
     return <Text>Ładowanie danych...</Text>;
@@ -99,13 +101,7 @@ useEffect(() => {
         <Text style={styles.subtitle}>Dodał: {user?.email}</Text>
         <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Lista Zakupów</Text>
-          <FontAwesome
-            size={16}
-            style={{marginBottom: 0}}
-            name="chevron-left"
-            color={'white'}
-          />
+          <Text style={styles.buttonText}>Przejdź do Listy Zakupów</Text>
         </TouchableOpacity>
         </Link>
       </View>
@@ -130,16 +126,15 @@ const styles = StyleSheet.create({
     fontSize: 16
   },
   buttonText: { 
-    fontSize: 16,
-    fontWeight: 800,
-    color: 'white'
+    fontSize: 20,
+    fontWeight: 700,
+    color: '#2196F3'
   },
   button: {
-    flexDirection: 'row',
-    backgroundColor: '#2497D5', 
+    flexDirection: 'row', 
     paddingVertical: 14, 
-    paddingHorizontal: 24, 
-    borderRadius: 24, 
+    paddingHorizontal: 38, 
+    borderRadius: 36, 
     gap: 8,
     marginTop: 20,
     alignSelf: 'center',
@@ -153,7 +148,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerButtonText: {
-    color: '#007AFF', // typowy niebieski kolor na iOS
+    color: '#2196F3', 
     fontSize: 16,
     fontWeight: 500,
   },

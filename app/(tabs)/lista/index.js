@@ -105,9 +105,11 @@ export default function HomeScreen() {
   const uniqueStores = [...new Set(products.map((p) => p.store))];
 
   const filteredProducts = storeFilter
-    ? products.filter((product) => product.store === storeFilter)
-    : products;
+  ? products.filter((product) => product.store === storeFilter)
+  : products;
 
+  // 🔹 SORTOWANIE: Nie kupione (is_purchased = false) na górze, kupione na dole
+  filteredProducts.sort((a, b) => a.is_purchased - b.is_purchased);
 
   return (
     <>
@@ -185,7 +187,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 
                 {/* Prawa część – przyciski informacje/usuwania */}
-                <View style={{ flexDirection: 'row', gap: 16 }}>
+                <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', gap: 16, minWidth: 40, paddingLeft: 8}}>
                   <Link href={`/(tabs)/listaa/${item.id}`} asChild>
                     <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <MaterialIcons name="info-outline" size={24} color="#2196F3" />
@@ -289,15 +291,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#E6E6E9',
     alignItems: 'center',
+
   },
   itemText: { 
     fontSize: 20,
     color: '#555555',
     paddingBottom: 3,
+    flex: 1,             // 🔹 Pozwala tekstowi rosnąć do maksymalnej przestrzeni
+    flexShrink: 1,       // 🔹 Pozwala na automatyczne skracanie TYLKO jeśli potrzeba
+    paddingRight: 0,    // 🔹 Zachowuje odstęp od ikonek, ale nie skraca niepotrzebnie
+    numberOfLines: 1,    // 🔹 Zapobiega rozwijaniu się na wiele linii
+    ellipsizeMode: "tail" // 🔹 Dodaje "..." tylko w razie konieczności
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'space-between',
   },
   // Styl dla ikony przy produkcie
   itemIcon: {

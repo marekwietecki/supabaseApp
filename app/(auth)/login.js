@@ -1,20 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { Alert, StyleSheet, View, AppState, TextInput, Button, Text, Touchable, TouchableOpacity } from 'react-native'
 import supabase from '../../lib/supabase-client'
-
-
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
-AppState.addEventListener('change', (state) => {
-  if (state === 'active') {
-    supabase.auth.startAutoRefresh()
-  } else {
-    supabase.auth.stopAutoRefresh()
-  }
-})
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -76,10 +63,10 @@ export default function Auth() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: "LOGIN"}}/>
+      <Stack.Screen options={{ headerShown: true, title: "Sign In/Up"}}/>
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <TextInput
-            style={[styles.textInput, {borderColor: isOneFocused ? '#2497D5' : 'white'}]}
+            style={[styles.textInput, {borderColor: isOneFocused ? '#2196F3' : '#D8E0E2'}]}
             label="Email"
             onChangeText={(text) => setEmail(text)}
             value={email}
@@ -92,7 +79,7 @@ export default function Auth() {
         </View>
         <View style={styles.verticallySpaced}>
           <TextInput
-            style={[styles.textInput, {borderColor: isTwoFocused ? '#2497D5' : 'white'}]}
+            style={[styles.textInput, {borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2'}]}
             label="Password"
             onChangeText={(text) => setPassword(text)}
             value={password}
@@ -134,24 +121,26 @@ const styles = StyleSheet.create({
   buttonText: {
     alignSelf: 'center',
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   buttonContainer: {
-    paddingHorizontal: 40,
-    paddingVertical: 12,
+    paddingHorizontal: 38,
+    paddingVertical: 14,
   },
   buttonTextPrimary: {
     color: 'white',
   },
   buttonContainerPrimary: {
-    backgroundColor: '#2497D5',
-    borderRadius: 24,
+    backgroundColor: '#44B04B',
+    borderRadius: 36,
+    alignSelf: 'center',
   },
   textInput: {
     paddingVertical: 16,
     paddingHorizontal: 16,
     fontSize: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: 24,
+    borderColor: 'gray'
   }
 })

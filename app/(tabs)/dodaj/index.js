@@ -9,6 +9,9 @@ export default function App() {
   const [productStore, setProductStore] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isOneFocused, setOneFocused] = useState(false);
+  const [isTwoFocused, setTwoFocused] = useState(false);
+  const [isThreeFocused, setThreeFocused] = useState(false);
   
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
@@ -60,22 +63,30 @@ export default function App() {
             placeholderTextColor="gray"
             value={productName}
             onChangeText={setProductName}
-            style={styles.input}
+            style={[styles.input, { borderColor: isOneFocused ? '#2196F3' : '#D8E0E2' }]}
+            autoCapitalize="none"
+            onFocus={() => setOneFocused(true)}
+            onBlur={() => setOneFocused(false)}
           />
           <TextInput
             placeholder="Cena"
             placeholderTextColor="gray"
             value={productPrice}
             onChangeText={setProductPrice}
-            style={styles.input}
+            style={[styles.input, { borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' }]}
             keyboardType="numeric"
+            onFocus={() => setTwoFocused(true)}
+            onBlur={() => setTwoFocused(false)}
           />
           <TextInput
             placeholder="Sklep"
             placeholderTextColor="gray"
             value={productStore}
             onChangeText={setProductStore}
-            style={styles.input}
+            style={[styles.input, { borderColor: isThreeFocused ? '#2196F3' : '#D8E0E2' }]}
+            autoCapitalize="none"
+            onFocus={() => setThreeFocused(true)}
+            onBlur={() => setThreeFocused(false)}
           />
           <TouchableOpacity
             style={[styles.button, loading && styles.disabledButton]}
@@ -124,26 +135,29 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 2,
     padding: 16,
     marginVertical: 4,
-    borderRadius: 20,
+    borderRadius: 24,
     color: 'black',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
   },
   button: {
-    borderRadius: 24,
-    backgroundColor: '#2497D5',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    borderRadius: 36,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 38,
+    paddingVertical: 14,
     marginTop: 8,
     alignItems: 'center',
-    maxWidth: '50%',
+    maxWidth: '70%',
     alignSelf: 'center',
   },
   buttonText: { 
     color: 'white', 
-    fontSize: 16, 
-    fontWeight: 'bold' 
+    fontSize: 20, 
+    fontWeight: 700 
   },
   error: {
     color: 'red',
