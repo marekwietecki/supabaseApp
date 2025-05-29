@@ -1,82 +1,104 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, SectionList, TouchableOpacity, Dimensions, Alert } from 'react-native';
-import { useRouter, Link, Stack } from 'expo-router';
+import { Link, Stack } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
-
 
 export default function HomeScreen() {
   const [storeFilter, setStoreFilter] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [products, setProducts] = useState([]);
-  const [session, setSession] = useState(null); // 🔥 Store session
-
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
 
-  const router = useRouter();
-  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUser(user);
+      } else {
+        Alert.alert("Error accessing User data");
+      }
+    });
+  }, []); 
 
-
-  // 🔥 Global fetchProducts function
   async function fetchProducts(userId) {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('creator_id', userId);
-
+    
     if (error) {
       Alert.alert("Błąd Pobierania z BD", error.message);
     } else {
-      setProducts(data);
+      setProducts([...data]);
     }
   }
 
-  // 🔥 Monitor authentication state
   useEffect(() => {
+    let lastAlertTime = 0;
+  
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
-        Alert.alert("Błąd", "Nie jesteś zalogowany.");
+        console.log("🔴 Wylogowany, próbuję pokazać alert...");
+  
+        const now = Date.now(); 
+        if (now - lastAlertTime > 600000) { 
+          Alert.alert("Błąd", "Nie jesteś zalogowany.");
+          lastAlertTime = now;
+        }
       } else {
-        console.log("Sesja aktywna:", session.user);
-        setSession(session); // Save session
-        fetchProducts(session.user.id); // Fetch user-specific products
+        console.log("✅ Sesja aktywna:", session.user);
+        setSession(session);
+        fetchProducts(session.user.id);
       }
     });
-
+  
     return () => {
-      console.log("Cleaning up session listener");
+      console.log("🧹 Czyszczę listener sesji...");
+      if (subscription?.subscription) {
+        subscription.subscription.unsubscribe();
+      }
     };
   }, []);
 
-  // 🔄 Fetch products & enable realtime updates
   useEffect(() => {
     if (session?.user) {
       fetchProducts(session.user.id);
-
-      // 🔥 Realtime updates
+  
       const channel = supabase
         .channel('products_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          console.log("Zmiana w produktach wykryta:", payload);
+          console.log("1 Zmiana w produktach wykryta:", payload);
           fetchProducts(session.user.id);
         })
         .subscribe();
-
+  
       return () => {
-        supabase.removeChannel(channel); // ✅ Proper cleanup
+        supabase.removeChannel(channel);
       };
     }
   }, [session]);
 
-  // ✅ Kup produkt
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user) {
+        fetchProducts(session.user.id);
+      }
+      return () => {
+      };
+    }, [session])
+  );
+
   async function toggleBoughtHandler(id, isPurchased) {
     const { error } = await supabase
       .from('products')
       .update({ is_purchased: !isPurchased })
       .eq('id', id);
-
+  
     if (error) {
       Alert.alert("Błąd Kupowania", error.message);
     } else {
@@ -87,28 +109,25 @@ export default function HomeScreen() {
       );
     }
   }
-
-  // ❌ Usuń produkt
+  
   async function removeProductHandler(id) {
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
-
     if (error) {
       Alert.alert("Błąd Usuwania", error.message);
     } else {
       setProducts((prev) => prev.filter((product) => product.id !== id));
     }
   }
-
+  
   const uniqueStores = [...new Set(products.map((p) => p.store))];
-
+  
   const filteredProducts = storeFilter
-  ? products.filter((product) => product.store === storeFilter)
-  : products;
-
-  // 🔹 SORTOWANIE: Nie kupione (is_purchased = false) na górze, kupione na dole
+    ? products.filter((product) => product.store === storeFilter)
+    : products;
+  
   filteredProducts.sort((a, b) => a.is_purchased - b.is_purchased);
 
   return (
@@ -167,10 +186,9 @@ export default function HomeScreen() {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
-                {/* Lewa część – przycisk do toggle'owania statusu zakupienia */}
                 <TouchableOpacity
                   onPress={() => toggleBoughtHandler(item.id, item.is_purchased)}
-                  style={styles.itemRow}  // Używamy nowego stylu: rząd z ikoną i tekstem
+                  style={styles.itemRow}  
                 >
                   {item.is_purchased ? (
                     <FontAwesome name="check-square" size={24} color="green" style={styles.itemIcon} />
@@ -185,10 +203,8 @@ export default function HomeScreen() {
                     {item.name}
                   </Text>
                 </TouchableOpacity>
-                
-                {/* Prawa część – przyciski informacje/usuwania */}
                 <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', gap: 16, minWidth: 40, paddingLeft: 8}}>
-                  <Link href={`/(tabs)/listaa/${item.id}`} asChild>
+                  <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
                     <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <MaterialIcons name="info-outline" size={24} color="#2196F3" />
                     </TouchableOpacity>
@@ -255,7 +271,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   filterIcon: { 
-    paddingRight: 8, paddingBottom: 8 
+    paddingRight: 8, 
+    paddingBottom: 8,
   },
   filterBox: {
     backgroundColor: '#EAF5FD',
@@ -297,11 +314,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#555555',
     paddingBottom: 3,
-    flex: 1,             // 🔹 Pozwala tekstowi rosnąć do maksymalnej przestrzeni
-    flexShrink: 1,       // 🔹 Pozwala na automatyczne skracanie TYLKO jeśli potrzeba
-    paddingRight: 0,    // 🔹 Zachowuje odstęp od ikonek, ale nie skraca niepotrzebnie
-    numberOfLines: 1,    // 🔹 Zapobiega rozwijaniu się na wiele linii
-    ellipsizeMode: "tail" // 🔹 Dodaje "..." tylko w razie konieczności
+    flex: 1,             
+    flexShrink: 1,       
+    paddingRight: 0,    
+    numberOfLines: 1,    
+    ellipsizeMode: "tail",
   },
   itemRow: {
     flexDirection: 'row',
@@ -309,7 +326,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-  // Styl dla ikony przy produkcie
   itemIcon: {
     marginRight: 8,
   },

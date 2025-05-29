@@ -1,12 +1,11 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, Link, useNavigation, useRouter } from 'expo-router';
-import supabase  from '../../../lib/supabase-client'; // 🔥 Import Supabase
+import supabase  from '../../../lib/supabase-client'; 
 import { useEffect, useState } from 'react';
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 export default function ProductDetailsScreen() {
-  const { id } = useLocalSearchParams(); // 🔥 Pobranie ID z URL
+  const { id } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
   const [product, setProduct] = useState(null);
@@ -22,14 +21,18 @@ export default function ProductDetailsScreen() {
     });
   }, []); 
 
-    // Ustawiamy headerRight tylko na ekranie pojedynczego produktu
+  useEffect(() => {
+    navigation.setOptions({      
+      headerTitle: () => null,
+    });
+  }, [navigation]);
+
   useEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => {
-            // Nawigujemy do ekranu ze wszystkimi szczegółami produktów
-            router.push('/(tabs)/listaa');
+            router.push('/(tabs)/szczegoly');
           }}
           style={styles.headerButton}
         >
@@ -39,7 +42,7 @@ export default function ProductDetailsScreen() {
             name="chevron-left"
             color={'#2196F3'}
           />
-          {/*<Text style={styles.headerButtonText}>Szczegóły</Text>*/}
+          <Text style={{color: '#2196F3', fontSize: 20, fontWeight: '600', paddingBottom: 4}}>Szczegóły</Text>
         </TouchableOpacity>
       ),
     });
@@ -71,23 +74,6 @@ useEffect(() => {
   if (id) fetchProductDetails();
 }, [id]);
 
-  useEffect(() => {
-  if (product) {
-    navigation.setOptions({
-      title: `${product.name}`, 
-      headerTitleAlign: 'center',  // ✅ Najprostszy sposób na iOS + może działać na Androidzie
-      headerTitleContainerStyle: {
-        flex: 1,                   // ✅ Powoduje automatyczne wyśrodkowanie na Androidzie
-        alignItems: 'center',       // ✅ Zapewnia, że cały kontener jest wyśrodkowany
-        
-      },
-      headerTitleStyle: {
-        textAlign: 'center',        // ✅ Wymusza wyśrodkowanie tekstu
-        fontWeight: 'bold',         // 🔹 Opcjonalnie: pogrubienie dla lepszej czytelności
-      },
-    });
-  }
-}, [product, navigation]);
 
   if (!product) {
     return <Text>Ładowanie danych...</Text>;
@@ -144,7 +130,7 @@ const styles = StyleSheet.create({
   headerButton: {
     marginRight: 120,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 4,
   },
   headerButtonText: {

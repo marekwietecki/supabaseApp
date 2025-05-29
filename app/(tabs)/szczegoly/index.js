@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, SectionList, TouchableOpacity, Dimensions, Alert } from 'react-native';
-import { useRouter, Link, Stack } from 'expo-router';
+import { Link, Stack } from 'expo-router';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
   const [products, setProducts] = useState([]);
-  const [session, setSession] = useState(null); // 🔥 Store session
-
+  const [session, setSession] = useState(null); 
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
-
-  const router = useRouter();
-
   const [ user, setUser ] = useState(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -24,7 +22,6 @@ export default function HomeScreen() {
     });
   }, []);  
 
-  // 🔥 Global fetchProducts function
   async function fetchProducts(userId) {
     const { data, error } = await supabase
       .from('products')
@@ -34,46 +31,63 @@ export default function HomeScreen() {
     if (error) {
       Alert.alert("Błąd Pobierania z BD", error.message);
     } else {
-      setProducts(data);
+      setProducts([...data]);
     }
   }
 
-  // 🔥 Monitor authentication state
   useEffect(() => {
+    let lastAlertTime = 0;
+
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
-        Alert.alert("Błąd", "Nie jesteś zalogowany.");
+        console.log("🔴 Wylogowany, próbuję pokazać alert...");
+
+        const now = Date.now(); 
+        if (now - lastAlertTime > 600000) { 
+          Alert.alert("Błąd", "Nie jesteś zalogowany.");
+          lastAlertTime = now;
+        }
       } else {
-        console.log("Sesja aktywna:", session.user);
-        setSession(session); // Save session
-        fetchProducts(session.user.id); // Fetch user-specific products
+        console.log("✅ Sesja aktywna:", session.user);
+        setSession(session);
+        fetchProducts(session.user.id);
       }
     });
 
     return () => {
-      console.log("Cleaning up session listener");
+      console.log("🧹 Czyszczę listener sesji...");
+      if (subscription?.subscription) {
+        subscription.subscription.unsubscribe();
+      }
     };
   }, []);
 
-  // 🔄 Fetch products & enable realtime updates
   useEffect(() => {
     if (session?.user) {
       fetchProducts(session.user.id);
 
-      // 🔥 Realtime updates
       const channel = supabase
         .channel('products_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          console.log("Zmiana w produktach wykryta:", payload);
+          console.log("2 Zmiana w produktach wykryta:", payload);
           fetchProducts(session.user.id);
         })
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel); // ✅ Proper cleanup
+        supabase.removeChannel(channel);
       };
     }
   }, [session]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user) {
+        fetchProducts(session.user.id);
+      }
+      return () => {};
+    }, [session])
+  );
 
   return (
     <>
@@ -90,7 +104,7 @@ export default function HomeScreen() {
             renderItem={({ item }) => (
               <View style={styles.item}>
                 <View style={{ flex: 1, paddingRight: 10, flexDirection: 'column', gap: 16 }}>
-                  <Link href={`/(tabs)/listaa/${item.id}`} asChild>
+                  <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
                     <TouchableOpacity>
                       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}> 
                         <Text

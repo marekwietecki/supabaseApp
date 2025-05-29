@@ -24,17 +24,16 @@ export default function App() {
 
   Keyboard.dismiss();
 
-  // Pobierz aktualną sesję użytkownika
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !session?.user) {
     Alert.alert("Błąd", "Nie można pobrać użytkownika.");
     return;
   }
 
-  const formattedPrice = parseFloat(productPrice.replace(',', '.')).toFixed(2); // 🔥 Zamienia przecinek na kropkę + wymusza precyzję
+  const formattedPrice = parseFloat(productPrice.replace(',', '.')).toFixed(2);
   const newProduct = {
     name: productName,
-    price: Number(formattedPrice), // 🔥 Teraz zapisuje się poprawnie
+    price: Number(formattedPrice), 
     store: productStore,
     creator_id: session.user.id,
   };

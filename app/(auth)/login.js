@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Stack } from 'expo-router'
-import { Alert, StyleSheet, View, AppState, TextInput, Button, Text, Touchable, TouchableOpacity } from 'react-native'
+import { Alert, StyleSheet, View, TextInput, Text, TouchableOpacity } from 'react-native'
 import supabase from '../../lib/supabase-client'
 
 export default function Auth() {
@@ -52,8 +52,7 @@ export default function Auth() {
     } else {
       console.log("No error, but no user data returned.");
     }
-    
-    // Jeśli nie ma sesji, wyświetlamy alert o konieczności weryfikacji email
+  
     if (!data?.session) {
       Alert.alert('Please check your inbox for email verification!');
     }
@@ -63,7 +62,7 @@ export default function Auth() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: true, title: "Sign In/Up"}}/>
+      <Stack.Screen options={{ headerShown: true, title: "Zaloguj/Zarejestruj się"}}/>
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <TextInput
             style={[styles.textInput, {borderColor: isOneFocused ? '#2196F3' : '#D8E0E2'}]}
@@ -93,12 +92,12 @@ export default function Auth() {
         </View>
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <TouchableOpacity disabled={loading} onPress={() => signInWithEmail()} style={[styles.buttonContainer, styles.buttonContainerPrimary]}>
-              <Text style={[styles.buttonText, styles.buttonTextPrimary]}>Sign In</Text>
+              <Text style={[styles.buttonText, styles.buttonTextPrimary]}>Zaloguj się</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.verticallySpaced}>
           <TouchableOpacity disabled={loading} onPress={() => signUpWithEmail()} style={styles.buttonContainer}>
-              <Text style={styles.buttonText}>Sign Up</Text>
+              <Text style={styles.buttonText}>Zarejestruj się</Text>
           </TouchableOpacity>
         </View>
     </View>

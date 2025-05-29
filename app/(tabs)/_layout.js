@@ -20,7 +20,7 @@ export default function TabsLayout() {
           color={color}
         />
       ) }} />
-      <Tabs.Screen name="listaa" options={{ tabBarLabel: "Listaa", title: "Listaa" , tabBarIcon: ({ color }) => (
+      <Tabs.Screen name="szczegoly" options={{ tabBarLabel: "Szczegóły", title: "Szczegóły" , tabBarIcon: ({ color }) => (
         <FontAwesome
           size={24}
           style={{marginBottom: -3}}

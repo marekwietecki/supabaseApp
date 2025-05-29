@@ -26,7 +26,14 @@ export default function App() {
 
   return (
     <SafeAreaView style={{flex: 1}}>
-      <Stack.Screen options={{ headerShown: true, title: "Profil"}}/>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: "Profil",
+          headerLeft: () => null,       
+          headerBackVisible: false,     
+        }}
+      />
       <View style={styles.container}>
         <StatusBar style="auto" />
         <View style={{flexDirection: 'column', alignItems: 'center', gap: 16}}>  
@@ -38,7 +45,6 @@ export default function App() {
           />
           <Text style={{ fontSize: 20, fontWeight: 700 }}>{user?.email}</Text>
         </View>
-        {/*<Text style={{fontSize: 8}}>{JSON.stringify(user, null, 2)}</Text> */}
         <Link href="/profil/user-details">
           <FontAwesome
             size={16}
@@ -72,10 +78,9 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 34,
     paddingVertical: 10,
-    //backgroundColor: '#2497D5',
     borderRadius: 36,
     marginVertical: 16,
-    borderWidth: 4,              // 🔹 Widoczna obwódka
+    borderWidth: 4,            
     borderColor: "#dc2020",
   },
 });
