@@ -1,8 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, Link, useNavigation, useRouter } from 'expo-router';
-import supabase  from '../../../lib/supabase-client'; 
+import {
+  useLocalSearchParams,
+  Link,
+  useNavigation,
+  useRouter,
+} from 'expo-router';
+import supabase from '../../../lib/supabase-client';
 import { useEffect, useState } from 'react';
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function ProductDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -10,19 +15,19 @@ export default function ProductDetailsScreen() {
   const router = useRouter();
   const [product, setProduct] = useState(null);
 
-  const [ user, setUser ] = useState(null);
+  const [user, setUser] = useState(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        setUser (user)
+        setUser(user);
       } else {
-        Alert.alert("Error accessing User data");
+        Alert.alert('Error accessing User data');
       }
     });
-  }, []); 
+  }, []);
 
   useEffect(() => {
-    navigation.setOptions({      
+    navigation.setOptions({
       headerTitle: () => null,
     });
   }, [navigation]);
@@ -38,89 +43,99 @@ export default function ProductDetailsScreen() {
         >
           <FontAwesome
             size={20}
-            style={{marginBottom: 0}}
+            style={{ marginBottom: 0 }}
             name="chevron-left"
             color={'#2196F3'}
           />
-          <Text style={{color: '#2196F3', fontSize: 20, fontWeight: '600', paddingBottom: 4}}>Szczegóły</Text>
+          <Text
+            style={{
+              color: '#2196F3',
+              fontSize: 20,
+              fontWeight: '600',
+              paddingBottom: 4,
+            }}
+          >
+            Szczegóły
+          </Text>
         </TouchableOpacity>
       ),
     });
   }, [navigation, router]);
 
-useEffect(() => {
-  console.log("Otrzymane id z URL:", id);
-  console.log("Pobieram produkt o id:", id);
+  useEffect(() => {
+    console.log('Otrzymane id z URL:', id);
+    console.log('Pobieram produkt o id:', id);
 
-  async function fetchProductDetails() {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (error) {
-        console.error("Błąd pobierania produktu:", error);
-      } else {
-        console.log("Pobrane dane produktu:", data);
-        setProduct(data);
+    async function fetchProductDetails() {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Błąd pobierania produktu:', error);
+        } else {
+          console.log('Pobrane dane produktu:', data);
+          setProduct(data);
+        }
+      } catch (err) {
+        console.error('Wyjątek w fetchProductDetails:', err);
       }
-    } catch (err) {
-      console.error("Wyjątek w fetchProductDetails:", err);
     }
-  }
 
-  if (id) fetchProductDetails();
-}, [id]);
-
+    if (id) fetchProductDetails();
+  }, [id]);
 
   if (!product) {
     return <Text>Ładowanie danych...</Text>;
   }
 
   return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{product.name}</Text>
-        <Text style={styles.subtitle}>Cena: {product.price.toFixed(2).replace('.', ',')} zł</Text>
-        <Text style={styles.subtitle}>Sklep: {product.store}</Text>
-        <Text style={styles.subtitle}>Dodał: {user?.email}</Text>
-        <Link href={`/(tabs)/lista`} asChild>
+    <View style={styles.container}>
+      <Text style={styles.title}>{product.name}</Text>
+      <Text style={styles.subtitle}>
+        Cena: {product.price.toFixed(2).replace('.', ',')} zł
+      </Text>
+      <Text style={styles.subtitle}>Miejsce zadania: {product.place}</Text>
+      <Text style={styles.subtitle}>Dodał: {user?.email}</Text>
+      <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Przejdź do Listy Zakupów</Text>
+          <Text style={styles.buttonText}>Przejdź do Listy Zadań</Text>
         </TouchableOpacity>
-        </Link>
-      </View>
+      </Link>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: 'flex-start', 
-    alignItems: 'flex-start', 
-    paddingLeft: '6%', 
+  container: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingLeft: '6%',
     paddingTop: '8%',
-    gap: 10
+    gap: 10,
   },
-  title: { 
-    fontSize: 24, 
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4 
+    marginBottom: 4,
   },
-  subtitle: { 
-    fontSize: 16
+  subtitle: {
+    fontSize: 16,
   },
-  buttonText: { 
+  buttonText: {
     fontSize: 20,
     fontWeight: 700,
-    color: '#2196F3'
+    color: '#2196F3',
   },
   button: {
-    flexDirection: 'row', 
-    paddingVertical: 14, 
-    paddingHorizontal: 38, 
-    borderRadius: 36, 
+    flexDirection: 'row',
+    paddingVertical: 14,
+    paddingHorizontal: 38,
+    borderRadius: 36,
     gap: 8,
     marginTop: 20,
     alignSelf: 'center',
@@ -134,7 +149,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerButtonText: {
-    color: '#2196F3', 
+    color: '#2196F3',
     fontSize: 16,
     fontWeight: 500,
   },

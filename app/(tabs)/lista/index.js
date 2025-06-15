@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, SectionList, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  SectionList,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { Link, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../../lib/supabase-client';
@@ -7,7 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 
 export default function HomeScreen() {
-  const [storeFilter, setStoreFilter] = useState('');
+  const [placeFilter, setPlaceFilter] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [products, setProducts] = useState([]);
   const [session, setSession] = useState(null);
@@ -20,19 +28,19 @@ export default function HomeScreen() {
       if (user) {
         setUser(user);
       } else {
-        Alert.alert("Error accessing User data");
+        Alert.alert('Error accessing User data');
       }
     });
-  }, []); 
+  }, []);
 
   async function fetchProducts(userId) {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('creator_id', userId);
-    
+
     if (error) {
-      Alert.alert("Błąd Pobierania z BD", error.message);
+      Alert.alert('Błąd Pobierania z BD', error.message);
     } else {
       setProducts([...data]);
     }
@@ -40,25 +48,27 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let lastAlertTime = 0;
-  
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        console.log("🔴 Wylogowany, próbuję pokazać alert...");
-  
-        const now = Date.now(); 
-        if (now - lastAlertTime > 600000) { 
-          Alert.alert("Błąd", "Nie jesteś zalogowany.");
-          lastAlertTime = now;
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session?.user) {
+          console.log('🔴 Wylogowany, próbuję pokazać alert...');
+
+          const now = Date.now();
+          if (now - lastAlertTime > 600000) {
+            Alert.alert('Uwaga', 'Nie jesteś zalogowany.');
+            lastAlertTime = now;
+          }
+        } else {
+          console.log('✅ Sesja aktywna:', session.user);
+          setSession(session);
+          fetchProducts(session.user.id);
         }
-      } else {
-        console.log("✅ Sesja aktywna:", session.user);
-        setSession(session);
-        fetchProducts(session.user.id);
-      }
-    });
-  
+      },
+    );
+
     return () => {
-      console.log("🧹 Czyszczę listener sesji...");
+      console.log('🧹 Czyszczę listener sesji...');
       if (subscription?.subscription) {
         subscription.subscription.unsubscribe();
       }
@@ -68,15 +78,19 @@ export default function HomeScreen() {
   useEffect(() => {
     if (session?.user) {
       fetchProducts(session.user.id);
-  
+
       const channel = supabase
         .channel('products_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          console.log("1 Zmiana w produktach wykryta:", payload);
-          fetchProducts(session.user.id);
-        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'products' },
+          (payload) => {
+            console.log('1 Zmiana w produktach wykryta:', payload);
+            fetchProducts(session.user.id);
+          },
+        )
         .subscribe();
-  
+
       return () => {
         supabase.removeChannel(channel);
       };
@@ -88,9 +102,8 @@ export default function HomeScreen() {
       if (session?.user) {
         fetchProducts(session.user.id);
       }
-      return () => {
-      };
-    }, [session])
+      return () => {};
+    }, [session]),
   );
 
   async function toggleBoughtHandler(id, isPurchased) {
@@ -98,45 +111,44 @@ export default function HomeScreen() {
       .from('products')
       .update({ is_purchased: !isPurchased })
       .eq('id', id);
-  
+
     if (error) {
-      Alert.alert("Błąd Kupowania", error.message);
+      Alert.alert('Błąd Kupowania', error.message);
     } else {
       setProducts((prev) =>
         prev.map((product) =>
-          product.id === id ? { ...product, is_purchased: !isPurchased } : product
-        )
+          product.id === id
+            ? { ...product, is_purchased: !isPurchased }
+            : product,
+        ),
       );
     }
   }
-  
+
   async function removeProductHandler(id) {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
-      Alert.alert("Błąd Usuwania", error.message);
+      Alert.alert('Błąd Usuwania', error.message);
     } else {
       setProducts((prev) => prev.filter((product) => product.id !== id));
     }
   }
-  
-  const uniqueStores = [...new Set(products.map((p) => p.store))];
-  
-  const filteredProducts = storeFilter
-    ? products.filter((product) => product.store === storeFilter)
+
+  const uniquePlaces = [...new Set(products.map((p) => p.place))];
+
+  const filteredProducts = placeFilter
+    ? products.filter((product) => product.place === placeFilter)
     : products;
-  
+
   filteredProducts.sort((a, b) => a.is_purchased - b.is_purchased);
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: "Lista Zakupów"}}/>
+      <Stack.Screen options={{ headerShown: true, title: 'Lista Zadań' }} />
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
           <View style={styles.titleContainer}>
-            <Text style={styles.h1}>Twoja lista zakupów</Text>
+            <Text style={styles.h1}>Twoja lista zadań</Text>
           </View>
           <View style={styles.filterRow}>
             <Text style={styles.h2}>Filtruj</Text>
@@ -151,31 +163,31 @@ export default function HomeScreen() {
             <View style={styles.filterBox}>
               <TouchableOpacity
                 style={styles.filterButton}
-                onPress={() => setStoreFilter('')}
+                onPress={() => setPlaceFilter('')}
               >
                 <Text
                   style={[
                     styles.filterText,
-                    storeFilter === '' && styles.activeFilterText,
+                    placeFilter === '' && styles.activeFilterText,
                   ]}
                 >
-                  Wszystkie Sklepy
+                  Wszystkie Miejsca
                 </Text>
               </TouchableOpacity>
 
-              {uniqueStores.map((store, idx) => (
+              {uniquePlaces.map((place, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={styles.filterButton}
-                  onPress={() => setStoreFilter(store)}
+                  onPress={() => setPlaceFilter(place)}
                 >
                   <Text
                     style={[
                       styles.filterText,
-                      storeFilter === store && styles.activeFilterText,
+                      placeFilter === place && styles.activeFilterText,
                     ]}
                   >
-                    {store}
+                    {place}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -187,29 +199,61 @@ export default function HomeScreen() {
             renderItem={({ item }) => (
               <View style={styles.item}>
                 <TouchableOpacity
-                  onPress={() => toggleBoughtHandler(item.id, item.is_purchased)}
-                  style={styles.itemRow}  
+                  onPress={() =>
+                    toggleBoughtHandler(item.id, item.is_purchased)
+                  }
+                  style={styles.itemRow}
                 >
                   {item.is_purchased ? (
-                    <FontAwesome name="check-square" size={24} color="green" style={styles.itemIcon} />
+                    <FontAwesome
+                      name="check-square"
+                      size={24}
+                      color="green"
+                      style={styles.itemIcon}
+                    />
                   ) : (
-                    <FontAwesome name="square-o" size={24} color="gray" style={styles.itemIcon} />
+                    <FontAwesome
+                      name="square-o"
+                      size={24}
+                      color="gray"
+                      style={styles.itemIcon}
+                    />
                   )}
                   <Text
-                    style={[styles.itemText, item.is_purchased && styles.bought]}
+                    style={[
+                      styles.itemText,
+                      item.is_purchased && styles.bought,
+                    ]}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
                     {item.name}
                   </Text>
                 </TouchableOpacity>
-                <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', gap: 16, minWidth: 40, paddingLeft: 8}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 16,
+                    alignItems: 'center',
+                    gap: 16,
+                    minWidth: 40,
+                    paddingLeft: 8,
+                  }}
+                >
                   <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
-                    <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <MaterialIcons name="info-outline" size={24} color="#2196F3" />
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                    >
+                      <MaterialIcons
+                        name="info-outline"
+                        size={24}
+                        color="#2196F3"
+                      />
                     </TouchableOpacity>
                   </Link>
-                  <TouchableOpacity onPress={() => removeProductHandler(item.id)}>
+                  <TouchableOpacity
+                    onPress={() => removeProductHandler(item.id)}
+                  >
                     <MaterialIcons name="close" size={28} color="#dc2020" />
                   </TouchableOpacity>
                 </View>
@@ -270,8 +314,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
   },
-  filterIcon: { 
-    paddingRight: 8, 
+  filterIcon: {
+    paddingRight: 8,
     paddingBottom: 8,
   },
   filterBox: {
@@ -289,8 +333,8 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   activeFilterText: {
-    color: '#222',      
-    fontWeight: 'bold',  
+    color: '#222',
+    fontWeight: 'bold',
   },
   header: {
     fontSize: 28,
@@ -308,17 +352,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#E6E6E9',
     alignItems: 'center',
-
   },
-  itemText: { 
+  itemText: {
     fontSize: 20,
     color: '#555555',
     paddingBottom: 3,
-    flex: 1,             
-    flexShrink: 1,       
-    paddingRight: 0,    
-    numberOfLines: 1,    
-    ellipsizeMode: "tail",
+    flex: 1,
+    flexShrink: 1,
+    paddingRight: 0,
+    numberOfLines: 1,
+    ellipsizeMode: 'tail',
   },
   itemRow: {
     flexDirection: 'row',
@@ -329,8 +372,8 @@ const styles = StyleSheet.create({
   itemIcon: {
     marginRight: 8,
   },
-  bought: { 
+  bought: {
     textDecorationLine: 'line-through',
-    color: '#BBBBBB' 
+    color: '#BBBBBB',
   },
 });

@@ -6,19 +6,21 @@ export default function IndexPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        router.replace("/(tabs)/lista/");
+        router.replace('/(tabs)/lista/');
       } else {
-        console.log("No user");
+        console.log('No user');
       }
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.replace("/(tabs)/lista/");
-      } else {
-        console.log("No user");
-        router.replace("/(auth)/login");
-      }
-    });
-  })
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          router.replace('/(tabs)/lista/');
+        } else {
+          console.log('No user');
+          router.replace('/(auth)/login');
+        }
+      },
+    );
+  });
 }

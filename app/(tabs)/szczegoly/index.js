@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, SectionList, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  SectionList,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { Link, Stack } from 'expo-router';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -7,20 +15,20 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
   const [products, setProducts] = useState([]);
-  const [session, setSession] = useState(null); 
+  const [session, setSession] = useState(null);
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
-  const [ user, setUser ] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        setUser (user)
+        setUser(user);
       } else {
-        Alert.alert("Error accessing User data");
+        Alert.alert('Error accessing User data');
       }
     });
-  }, []);  
+  }, []);
 
   async function fetchProducts(userId) {
     const { data, error } = await supabase
@@ -29,7 +37,7 @@ export default function HomeScreen() {
       .eq('creator_id', userId);
 
     if (error) {
-      Alert.alert("Błąd Pobierania z BD", error.message);
+      Alert.alert('Błąd Pobierania z BD', error.message);
     } else {
       setProducts([...data]);
     }
@@ -38,24 +46,26 @@ export default function HomeScreen() {
   useEffect(() => {
     let lastAlertTime = 0;
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        console.log("🔴 Wylogowany, próbuję pokazać alert...");
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session?.user) {
+          console.log('🔴 Wylogowany, próbuję pokazać alert...');
 
-        const now = Date.now(); 
-        if (now - lastAlertTime > 600000) { 
-          Alert.alert("Błąd", "Nie jesteś zalogowany.");
-          lastAlertTime = now;
+          const now = Date.now();
+          if (now - lastAlertTime > 600000) {
+            Alert.alert('Uwaga', 'Nie jesteś zalogowany.');
+            lastAlertTime = now;
+          }
+        } else {
+          console.log('✅ Sesja aktywna:', session.user);
+          setSession(session);
+          fetchProducts(session.user.id);
         }
-      } else {
-        console.log("✅ Sesja aktywna:", session.user);
-        setSession(session);
-        fetchProducts(session.user.id);
-      }
-    });
+      },
+    );
 
     return () => {
-      console.log("🧹 Czyszczę listener sesji...");
+      console.log('🧹 Czyszczę listener sesji...');
       if (subscription?.subscription) {
         subscription.subscription.unsubscribe();
       }
@@ -68,10 +78,14 @@ export default function HomeScreen() {
 
       const channel = supabase
         .channel('products_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          console.log("2 Zmiana w produktach wykryta:", payload);
-          fetchProducts(session.user.id);
-        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'products' },
+          (payload) => {
+            console.log('2 Zmiana w produktach wykryta:', payload);
+            fetchProducts(session.user.id);
+          },
+        )
         .subscribe();
 
       return () => {
@@ -86,27 +100,42 @@ export default function HomeScreen() {
         fetchProducts(session.user.id);
       }
       return () => {};
-    }, [session])
+    }, [session]),
   );
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: "Szczegóły Produktów"}}/>
+      <Stack.Screen
+        options={{ headerShown: true, title: 'Szczegóły Zadań' }}
+      />
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
           <View style={styles.titleContainer}>
-            <Text style={styles.h1}>Twoje produkty</Text>
+            <Text style={styles.h1}>Twoje Zadania</Text>
           </View>
-          
+
           <SectionList
             sections={[{ title: 'Lista Zakupów', data: products }]}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
-                <View style={{ flex: 1, paddingRight: 10, flexDirection: 'column', gap: 16 }}>
+                <View
+                  style={{
+                    flex: 1,
+                    paddingRight: 10,
+                    flexDirection: 'column',
+                    gap: 16,
+                  }}
+                >
                   <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
                     <TouchableOpacity>
-                      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}> 
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
                         <Text
                           style={styles.itemName}
                           numberOfLines={1}
@@ -114,28 +143,33 @@ export default function HomeScreen() {
                         >
                           {item.name}
                         </Text>
-                        <MaterialIcons name="info-outline" size={24} color="#2196F3" style={{marginBottom: 6}}/>
-                      </View> 
+                        <MaterialIcons
+                          name="info-outline"
+                          size={24}
+                          color="#2196F3"
+                          style={{ marginBottom: 6 }}
+                        />
+                      </View>
                       <Text
                         style={styles.itemText}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        Cena:  {item.price.toFixed(2).replace('.', ',')} zł
+                        Cena: {item.price.toFixed(2).replace('.', ',')} zł
                       </Text>
                       <Text
                         style={styles.itemText}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        Sklep:  {item.store}
+                        Miejsce zadania: {item.place}
                       </Text>
                       <Text
                         style={styles.itemText}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        Dodał:  {user?.email}
+                        Dodał: {user?.email}
                       </Text>
                     </TouchableOpacity>
                   </Link>
@@ -201,13 +235,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 0,
   },
-  itemName: { 
+  itemName: {
     fontSize: 20,
-    fontWeight: 600, 
+    fontWeight: 600,
     paddingBottom: 8,
   },
-  itemText: { 
+  itemText: {
     fontSize: 14,
-    paddingVertical: 2, 
+    paddingVertical: 2,
   },
 });

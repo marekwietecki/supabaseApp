@@ -2,9 +2,9 @@ import { Stack } from 'expo-router';
 
 export default function ListLayout() {
   return (
-    <Stack 
+    <Stack
       screenOptions={({ route }) => ({
-        headerBackVisible: false, 
+        headerBackVisible: false,
         headerLeft: route.name === 'index' ? () => null : undefined,
       })}
     />
