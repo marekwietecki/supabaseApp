@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import supabase from '../../../lib/supabase-client';
 import { Stack } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   StyleSheet,
   Text,
@@ -13,9 +14,10 @@ import {
 } from 'react-native';
 
 export default function App() {
-  const [productName, setProductName] = useState('');
-  const [productPrice, setProductPrice] = useState('');
-  const [productPlace, setProductPlace] = useState('');
+  const [taskName, setTaskName] = useState('');
+  const [taskDate, setTaskDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [taskPlace, setTaskPlace] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isOneFocused, setOneFocused] = useState(false);
@@ -26,7 +28,7 @@ export default function App() {
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
 
   async function handleAddProduct() {
-    if (!productName || !productPrice || !productPlace) {
+    if (!taskName || !taskDate || !taskPlace) {
       setError('Uzupełnij wszystkie pola przed dodaniem produktu!');
       return;
     }
@@ -41,27 +43,24 @@ export default function App() {
       Alert.alert('Błąd', 'Nie można pobrać użytkownika.');
       return;
     }
-
-    const formattedPrice = parseFloat(productPrice.replace(',', '.')).toFixed(
-      2,
-    );
-    const newProduct = {
-      name: productName,
-      price: Number(formattedPrice),
-      place: productPlace,
+    
+    const newTask = {
+      name: taskName,
+      date: taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/'),
+      place: taskPlace,
       creator_id: session.user.id,
     };
 
-    const { error } = await supabase.from('products').insert([newProduct]);
+    const { error } = await supabase.from('products').insert([newTask]);
 
     if (error) {
       Alert.alert('Błąd', error.message);
     } else {
-      setProductName('');
-      setProductPrice('');
-      setProductPlace('');
+      setTaskName('');
+      setTaskDate(null);
+      setTaskPlace('');
       setError('');
-      Alert.alert('Sukces', 'Produkt dodany do listy!');
+      Alert.alert('Sukces', 'Zadanie dodane do listy!');
     }
   }
 
@@ -76,10 +75,10 @@ export default function App() {
         </Text>
         <View style={styles.wrapper}>
           <TextInput
-            placeholder="Nazwa produktu"
+            placeholder="Nazwa zadania"
             placeholderTextColor="gray"
-            value={productName}
-            onChangeText={setProductName}
+            value={taskName}
+            onChangeText={setTaskName}
             style={[
               styles.input,
               { borderColor: isOneFocused ? '#2196F3' : '#D8E0E2' },
@@ -88,24 +87,40 @@ export default function App() {
             onFocus={() => setOneFocused(true)}
             onBlur={() => setOneFocused(false)}
           />
-          <TextInput
-            placeholder="Cena"
-            placeholderTextColor="gray"
-            value={productPrice}
-            onChangeText={setProductPrice}
+          {/* Zamiast pola na cenę umieszczamy przycisk otwierający DateTimePicker */}
+          <TouchableOpacity 
+            onPress={() => setShowDatePicker(true)}
             style={[
               styles.input,
-              { borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' },
+              {  borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' }
             ]}
-            keyboardType="numeric"
             onFocus={() => setTwoFocused(true)}
             onBlur={() => setTwoFocused(false)}
-          />
+          >
+            <Text style={{ color: taskDate ? 'black' : 'gray', fontSize: 16 }}>
+              {taskDate ? taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/') : 'Wybierz datę'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Wyświetlamy DateTimePicker, gdy użytkownik chce wybrać datę */}
+          {showDatePicker && (
+            <DateTimePicker
+              value={taskDate || new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false); // zamykamy picker
+                if (selectedDate) {
+                  setTaskDate(selectedDate);
+                }
+              }}
+            />
+          )}
           <TextInput
             placeholder="Miejsce Zadania"
             placeholderTextColor="gray"
-            value={productPlace}
-            onChangeText={setProductPlace}
+            value={taskPlace}
+            onChangeText={setTaskPlace}
             style={[
               styles.input,
               { borderColor: isThreeFocused ? '#2196F3' : '#D8E0E2' },
@@ -120,7 +135,7 @@ export default function App() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? 'Dodawanie...' : 'Dodaj Produkt'}
+              {loading ? 'Dodawanie...' : 'Dodaj Zadanie'}
             </Text>
           </TouchableOpacity>
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -163,7 +178,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 2,
     padding: 16,
-    marginVertical: 4,
+    marginVertical: 6,
     borderRadius: 24,
     color: 'black',
     paddingVertical: 16,
@@ -175,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     paddingHorizontal: 38,
     paddingVertical: 14,
-    marginTop: 8,
+    marginTop: 16,
     alignItems: 'center',
     maxWidth: '70%',
     alignSelf: 'center',
@@ -189,6 +204,6 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 12,
   },
 });

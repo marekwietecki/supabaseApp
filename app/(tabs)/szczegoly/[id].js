@@ -96,10 +96,11 @@ export default function ProductDetailsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>{product.name}</Text>
       <Text style={styles.subtitle}>
-        Cena: {product.price.toFixed(2).replace('.', ',')} zł
+        Termin zadania: {new Date(product.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
       <Text style={styles.subtitle}>Miejsce zadania: {product.place}</Text>
       <Text style={styles.subtitle}>Dodał: {user?.email}</Text>
+      <Text style={styles.subtitle}>Data dodania: {new Date(product.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}</Text>
       <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Przejdź do Listy Zadań</Text>

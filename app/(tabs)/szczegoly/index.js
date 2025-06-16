@@ -155,7 +155,7 @@ export default function HomeScreen() {
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        Cena: {item.price.toFixed(2).replace('.', ',')} zł
+                        Termin zadania: {new Date(item.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
                       </Text>
                       <Text
                         style={styles.itemText}
@@ -170,6 +170,13 @@ export default function HomeScreen() {
                         ellipsizeMode="tail"
                       >
                         Dodał: {user?.email}
+                      </Text>
+                      <Text
+                        style={styles.itemText}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        Data dodania: {new Date(item.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
                       </Text>
                     </TouchableOpacity>
                   </Link>

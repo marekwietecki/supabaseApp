@@ -106,10 +106,10 @@ export default function HomeScreen() {
     }, [session]),
   );
 
-  async function toggleBoughtHandler(id, isPurchased) {
+  async function toggleBoughtHandler(id, isDone) {
     const { error } = await supabase
       .from('products')
-      .update({ is_purchased: !isPurchased })
+      .update({ is_done: !isDone })
       .eq('id', id);
 
     if (error) {
@@ -118,7 +118,7 @@ export default function HomeScreen() {
       setProducts((prev) =>
         prev.map((product) =>
           product.id === id
-            ? { ...product, is_purchased: !isPurchased }
+            ? { ...product, is_done: !isDone }
             : product,
         ),
       );
@@ -140,7 +140,7 @@ export default function HomeScreen() {
     ? products.filter((product) => product.place === placeFilter)
     : products;
 
-  filteredProducts.sort((a, b) => a.is_purchased - b.is_purchased);
+  filteredProducts.sort((a, b) => a.is_done - b.is_done);
 
   return (
     <>
@@ -200,11 +200,11 @@ export default function HomeScreen() {
               <View style={styles.item}>
                 <TouchableOpacity
                   onPress={() =>
-                    toggleBoughtHandler(item.id, item.is_purchased)
+                    toggleBoughtHandler(item.id, item.is_done)
                   }
                   style={styles.itemRow}
                 >
-                  {item.is_purchased ? (
+                  {item.is_done ? (
                     <FontAwesome
                       name="check-square"
                       size={24}
@@ -222,7 +222,7 @@ export default function HomeScreen() {
                   <Text
                     style={[
                       styles.itemText,
-                      item.is_purchased && styles.bought,
+                      item.is_done && styles.bought,
                     ]}
                     numberOfLines={1}
                     ellipsizeMode="tail"
