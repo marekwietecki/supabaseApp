@@ -205,7 +205,15 @@ export default function HomeScreen() {
           )}
 
           <View style={styles.filterRow}>
-            <Text style={styles.h2}>Wybierz miejsca</Text>
+            <Text style={styles.h2}>{placeFilter ? placeFilter : 'Wybierz miejsce'}</Text>
+            {placeFilter && (
+              <TouchableOpacity
+                style={styles.clearFilterButton}
+                onPress={() => setPlaceFilter('')}
+              >
+                <Text style={styles.clearFilterText}>Usuń</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.filterIcon}
               onPress={() => setFilterVisible(!filterVisible)}
@@ -367,6 +375,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 20,
+    flex: 1,
   },
   filterIcon: {
     paddingRight: 8,
