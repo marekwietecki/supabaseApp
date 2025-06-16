@@ -23,11 +23,20 @@ export default function App() {
   const [isOneFocused, setOneFocused] = useState(false);
   const [isTwoFocused, setTwoFocused] = useState(false);
   const [isThreeFocused, setThreeFocused] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState('');
 
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
 
-  async function handleAddProduct() {
+  const quotes = [
+    "Wyznaczaj sobie wysokie cele i nie przestawaj, dopóki ich nie osiągniesz. – Bo Jackson",
+    "Największym niebezpieczeństwem nie jest to, że mierzymy za wysoko i nie osiągamy celu, ale to, że mierzymy za nisko i cel osiągamy. – Michał Anioł",
+    "Droga do celu to nie połowa przyjemności, to cała przyjemność. – Jan Paweł II",
+    "Nie możesz oczekiwać, że osiągniesz nowe cele, jeśli nie podejmiesz działania. – Les Brown",
+    "Każde zadanie, które wykonujesz, przybliża Cię do miejsca, w którym chcesz być. – Nieznany autor",
+  ];
+
+  async function handleAddTask() {
     if (!taskName || !taskDate || !taskPlace) {
       setError('Uzupełnij wszystkie pola przed dodaniem produktu!');
       return;
@@ -46,12 +55,12 @@ export default function App() {
     
     const newTask = {
       name: taskName,
-      date: taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/'),
+      date: taskDate.toISOString(),
       place: taskPlace,
       creator_id: session.user.id,
     };
 
-    const { error } = await supabase.from('products').insert([newTask]);
+    const { error } = await supabase.from('tasks').insert([newTask]);
 
     if (error) {
       Alert.alert('Błąd', error.message);
@@ -60,6 +69,10 @@ export default function App() {
       setTaskDate(null);
       setTaskPlace('');
       setError('');
+
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      setSelectedQuote(randomQuote);
+
       Alert.alert('Sukces', 'Zadanie dodane do listy!');
     }
   }
@@ -87,7 +100,6 @@ export default function App() {
             onFocus={() => setOneFocused(true)}
             onBlur={() => setOneFocused(false)}
           />
-          {/* Zamiast pola na cenę umieszczamy przycisk otwierający DateTimePicker */}
           <TouchableOpacity 
             onPress={() => setShowDatePicker(true)}
             style={[
@@ -101,15 +113,13 @@ export default function App() {
               {taskDate ? taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/') : 'Wybierz datę'}
             </Text>
           </TouchableOpacity>
-
-          {/* Wyświetlamy DateTimePicker, gdy użytkownik chce wybrać datę */}
           {showDatePicker && (
             <DateTimePicker
               value={taskDate || new Date()}
               mode="date"
               display="default"
               onChange={(event, selectedDate) => {
-                setShowDatePicker(false); // zamykamy picker
+                setShowDatePicker(false);
                 if (selectedDate) {
                   setTaskDate(selectedDate);
                 }
@@ -131,7 +141,7 @@ export default function App() {
           />
           <TouchableOpacity
             style={[styles.button, loading && styles.disabledButton]}
-            onPress={handleAddProduct}
+            onPress={handleAddTask}
             disabled={loading}
           >
             <Text style={styles.buttonText}>
@@ -139,6 +149,9 @@ export default function App() {
             </Text>
           </TouchableOpacity>
           {error ? <Text style={styles.error}>{error}</Text> : null}
+          {selectedQuote ? (
+            <Text style={styles.quoteText}>{selectedQuote}</Text>
+          ) : null}
         </View>
       </View>
     </>
@@ -205,5 +218,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,
+  },
+  quoteText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    fontWeight: '300',
+    textAlign: 'center',
+    marginTop: '40%',
+    color: '#555',
+    paddingHorizontal: 20,
   },
 });

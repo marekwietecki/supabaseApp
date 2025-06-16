@@ -14,7 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen() {
-  const [products, setProducts] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [session, setSession] = useState(null);
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
@@ -30,16 +30,16 @@ export default function HomeScreen() {
     });
   }, []);
 
-  async function fetchProducts(userId) {
+  async function fetchTasks(userId) {
     const { data, error } = await supabase
-      .from('products')
+      .from('tasks')
       .select('*')
       .eq('creator_id', userId);
 
     if (error) {
       Alert.alert('Błąd Pobierania z BD', error.message);
     } else {
-      setProducts([...data]);
+      setTasks([...data]);
     }
   }
 
@@ -59,7 +59,7 @@ export default function HomeScreen() {
         } else {
           console.log('✅ Sesja aktywna:', session.user);
           setSession(session);
-          fetchProducts(session.user.id);
+          fetchTasks(session.user.id);
         }
       },
     );
@@ -74,16 +74,16 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (session?.user) {
-      fetchProducts(session.user.id);
+      fetchTasks(session.user.id);
 
       const channel = supabase
-        .channel('products_changes')
+        .channel('tasks_changes')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'products' },
+          { event: '*', schema: 'public', table: 'tasks' },
           (payload) => {
-            console.log('2 Zmiana w produktach wykryta:', payload);
-            fetchProducts(session.user.id);
+            console.log('2 Zmiana w taskach wykryta:', payload);
+            fetchTasks(session.user.id);
           },
         )
         .subscribe();
@@ -97,10 +97,14 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (session?.user) {
-        fetchProducts(session.user.id);
+        fetchTasks(session.user.id);
       }
       return () => {};
     }, [session]),
+  );
+
+  const sortedTasks = [...tasks].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
   );
 
   return (
@@ -115,7 +119,7 @@ export default function HomeScreen() {
           </View>
 
           <SectionList
-            sections={[{ title: 'Lista Zakupów', data: products }]}
+            sections={[{ title: 'Lista Zakupów', data: sortedTasks }]}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
@@ -151,6 +155,16 @@ export default function HomeScreen() {
                         />
                       </View>
                       <Text
+                        style={[
+                          styles.itemText,
+                          { color: item.is_done ? 'green' : 'red' }
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {item.is_done ? 'Wykonane' : 'Nie wykonane'}
+                      </Text>
+                      <Text
                         style={styles.itemText}
                         numberOfLines={1}
                         ellipsizeMode="tail"
@@ -164,20 +178,22 @@ export default function HomeScreen() {
                       >
                         Miejsce zadania: {item.place}
                       </Text>
+                      {/*
                       <Text
-                        style={styles.itemText}
+                        style={styles.itemTextSecondary}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
                         Dodał: {user?.email}
                       </Text>
                       <Text
-                        style={styles.itemText}
+                        style={styles.itemTextSecondary}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
                         Data dodania: {new Date(item.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
                       </Text>
+                      */}
                     </TouchableOpacity>
                   </Link>
                 </View>
@@ -250,5 +266,10 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 14,
     paddingVertical: 2,
+  },
+  itemTextSecondary: {
+    fontSize: 14,
+    paddingVertical: 2,
+    color: 'gray',
   },
 });

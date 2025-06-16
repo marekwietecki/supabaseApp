@@ -13,13 +13,18 @@ import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function HomeScreen() {
   const [placeFilter, setPlaceFilter] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [dateFilter, setDateFilter] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateFilterLabel, setDateFilterLabel] = useState('Wybierz datę');
+
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
 
@@ -33,16 +38,16 @@ export default function HomeScreen() {
     });
   }, []);
 
-  async function fetchProducts(userId) {
+  async function fetchTasks(userId) {
     const { data, error } = await supabase
-      .from('products')
+      .from('tasks')
       .select('*')
       .eq('creator_id', userId);
 
     if (error) {
       Alert.alert('Błąd Pobierania z BD', error.message);
     } else {
-      setProducts([...data]);
+      setTasks([...data]);
     }
   }
 
@@ -62,7 +67,7 @@ export default function HomeScreen() {
         } else {
           console.log('✅ Sesja aktywna:', session.user);
           setSession(session);
-          fetchProducts(session.user.id);
+          fetchTasks(session.user.id);
         }
       },
     );
@@ -77,16 +82,16 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (session?.user) {
-      fetchProducts(session.user.id);
+      fetchTasks(session.user.id);
 
       const channel = supabase
-        .channel('products_changes')
+        .channel('tasks_changes')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'products' },
+          { event: '*', schema: 'public', table: 'tasks' },
           (payload) => {
             console.log('1 Zmiana w produktach wykryta:', payload);
-            fetchProducts(session.user.id);
+            fetchTasks(session.user.id);
           },
         )
         .subscribe();
@@ -100,13 +105,13 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (session?.user) {
-        fetchProducts(session.user.id);
+        fetchTasks(session.user.id);
       }
       return () => {};
     }, [session]),
   );
 
-  async function toggleBoughtHandler(id, isDone) {
+  async function toggleDoneHandler(id, isDone) {
     const { error } = await supabase
       .from('products')
       .update({ is_done: !isDone })
@@ -115,32 +120,44 @@ export default function HomeScreen() {
     if (error) {
       Alert.alert('Błąd Kupowania', error.message);
     } else {
-      setProducts((prev) =>
-        prev.map((product) =>
-          product.id === id
-            ? { ...product, is_done: !isDone }
-            : product,
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id
+            ? { ...task, is_done: !isDone }
+            : task,
         ),
       );
     }
   }
 
-  async function removeProductHandler(id) {
-    const { error } = await supabase.from('products').delete().eq('id', id);
+  async function removeTaskHandler(id) {
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
       Alert.alert('Błąd Usuwania', error.message);
     } else {
-      setProducts((prev) => prev.filter((product) => product.id !== id));
+      setTasks((prev) => prev.filter((task) => task.id !== id));
     }
   }
 
-  const uniquePlaces = [...new Set(products.map((p) => p.place))];
+  const uniquePlaces = [...new Set(tasks.map((p) => p.place))];
 
-  const filteredProducts = placeFilter
-    ? products.filter((product) => product.place === placeFilter)
-    : products;
+  const filteredTasks = tasks.filter((task) => {
+    const matchesPlace = placeFilter ? task.place === placeFilter : true;
+    const matchesDate = dateFilter ? new Date(task.date).toDateString() === dateFilter.toDateString() : true;
+    return matchesPlace && matchesDate;
+  });
 
-  filteredProducts.sort((a, b) => a.is_done - b.is_done);
+  filteredTasks.sort((a, b) => {
+    // Najpierw porównujemy status wykonania. Zakładamy, że false (0) oznacza niewykonane,
+    // a true (1) – wykonane. Dzięki temu niewykonane zadania będą wyświetlone jako pierwsze.
+    if (a.is_done !== b.is_done) {
+      return a.is_done - b.is_done;
+    }
+    // Jeżeli oba zadania mają ten sam status, sortujemy je według daty.
+    // Tworzymy obiekty Date na podstawie a.date i b.date,
+    // a następnie odejmujemy je, co spowoduje sortowanie od najstarszych do najnowszych.
+    return new Date(a.date) - new Date(b.date);
+  });
 
   return (
     <>
@@ -150,8 +167,45 @@ export default function HomeScreen() {
           <View style={styles.titleContainer}>
             <Text style={styles.h1}>Twoja lista zadań</Text>
           </View>
+
           <View style={styles.filterRow}>
-            <Text style={styles.h2}>Filtruj</Text>
+            <Text style={styles.h2}>{dateFilterLabel}</Text>
+            {dateFilter && (
+              <TouchableOpacity
+                style={styles.clearFilterButton}
+                onPress={() => {
+                  setDateFilter(null);
+                  setDateFilterLabel('Wybierz datę');
+                }}
+              >
+                <Text style={styles.clearFilterText}>Usuń</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.filterIcon}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <MaterialIcons name="date-range" size={24} color="#444444" />
+            </TouchableOpacity>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={dateFilter || new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) {
+                  setDateFilter(selectedDate);
+                  setDateFilterLabel(selectedDate.toLocaleDateString('pl-PL').replace(/\./g, '/'));
+                }
+              }}
+            />
+          )}
+
+          <View style={styles.filterRow}>
+            <Text style={styles.h2}>Wybierz miejsca</Text>
             <TouchableOpacity
               style={styles.filterIcon}
               onPress={() => setFilterVisible(!filterVisible)}
@@ -194,13 +248,13 @@ export default function HomeScreen() {
             </View>
           )}
           <SectionList
-            sections={[{ title: 'Lista Zakupów', data: filteredProducts }]}
+            sections={[{ title: 'Lista Zakupów', data: filteredTasks }]}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
                 <TouchableOpacity
                   onPress={() =>
-                    toggleBoughtHandler(item.id, item.is_done)
+                    toggleDoneHandler(item.id, item.is_done)
                   }
                   style={styles.itemRow}
                 >
@@ -222,7 +276,7 @@ export default function HomeScreen() {
                   <Text
                     style={[
                       styles.itemText,
-                      item.is_done && styles.bought,
+                      item.is_done && styles.done,
                     ]}
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -252,7 +306,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </Link>
                   <TouchableOpacity
-                    onPress={() => removeProductHandler(item.id)}
+                    onPress={() => removeTaskHandler(item.id)}
                   >
                     <MaterialIcons name="close" size={28} color="#dc2020" />
                   </TouchableOpacity>
@@ -319,10 +373,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   filterBox: {
-    backgroundColor: '#EAF5FD',
     padding: 8,
     borderRadius: 16,
     marginVertical: 12,
+    borderWidth: 3,
+    borderColor: 'gray',
   },
   filterButton: {
     paddingVertical: 10,
@@ -372,8 +427,28 @@ const styles = StyleSheet.create({
   itemIcon: {
     marginRight: 8,
   },
-  bought: {
+  done: {
     textDecorationLine: 'line-through',
     color: '#BBBBBB',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  filterIcon: {
+    padding: 10,
+    backgroundColor: '#ddd',
+    borderRadius: 8,
+  },
+  clearFilterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  clearFilterText: {
+    color: '#dc2020',
+    fontSize: 14,
   },
 });

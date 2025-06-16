@@ -8,12 +8,13 @@ import {
 import supabase from '../../../lib/supabase-client';
 import { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { MaterialIcons } from '@expo/vector-icons';
 
-export default function ProductDetailsScreen() {
+export default function TaskDetailsScreen() {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
-  const [product, setProduct] = useState(null);
+  const [task, setTask] = useState(null);
 
   const [user, setUser] = useState(null);
   useEffect(() => {
@@ -64,43 +65,49 @@ export default function ProductDetailsScreen() {
 
   useEffect(() => {
     console.log('Otrzymane id z URL:', id);
-    console.log('Pobieram produkt o id:', id);
+    console.log('Pobieram zadanie o id:', id);
 
-    async function fetchProductDetails() {
+    async function fetchTaskDetails() {
       try {
         const { data, error } = await supabase
-          .from('products')
+          .from('tasks')
           .select('*')
           .eq('id', id)
           .single();
 
         if (error) {
-          console.error('Błąd pobierania produktu:', error);
+          console.error('Błąd pobierania zadania:', error);
         } else {
-          console.log('Pobrane dane produktu:', data);
-          setProduct(data);
+          console.log('Pobrane dane zadania:', data);
+          setTask(data);
         }
       } catch (err) {
-        console.error('Wyjątek w fetchProductDetails:', err);
+        console.error('Wyjątek w fetchTaskDetails:', err);
       }
     }
 
-    if (id) fetchProductDetails();
+    if (id) fetchTaskDetails();
   }, [id]);
 
-  if (!product) {
+  if (!task) {
     return <Text>Ładowanie danych...</Text>;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{product.name}</Text>
+      <Text style={styles.title}>{task.name}</Text>
+      <Text style={[styles.subtitle,{ color: task.is_done ? 'green' : 'red' }]} numberOfLines={1} ellipsizeMode="tail">{task.is_done ? 'Wykonane' : 'Nie wykonane'}</Text>
       <Text style={styles.subtitle}>
-        Termin zadania: {new Date(product.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
+        Termin zadania: {new Date(task.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
-      <Text style={styles.subtitle}>Miejsce zadania: {product.place}</Text>
-      <Text style={styles.subtitle}>Dodał: {user?.email}</Text>
-      <Text style={styles.subtitle}>Data dodania: {new Date(product.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}</Text>
+      <Text style={styles.subtitle}>Miejsce zadania: {task.place}</Text>
+      <Text style={styles.subtitleSecondary}>Dodał: {user?.email}</Text>
+      <Text style={styles.subtitleSecondary}>
+        Data dodania: {new Date(task.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
+      </Text>
+      <Text style={styles.subtitleSecondary}>
+        Godzina dodania: {new Date(task.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+      </Text>
       <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Przejdź do Listy Zadań</Text>
@@ -127,6 +134,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
   },
+  subtitleSecondary: {
+    fontSize: 16,
+    color: 'gray',
+  },
   buttonText: {
     fontSize: 20,
     fontWeight: 700,
@@ -134,10 +145,8 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    paddingVertical: 14,
     paddingHorizontal: 38,
     borderRadius: 36,
-    gap: 8,
     marginTop: 20,
     alignSelf: 'center',
     alignItems: 'center',
