@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import {
   useLocalSearchParams,
   Link,
@@ -15,6 +15,9 @@ export default function TaskDetailsScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const [task, setTask] = useState(null);
+
+  const screenWidth = Dimensions.get('window').width;
+  const dynamicPaddingTop = screenWidth > 600 ? 0 : '8%';
 
   const [user, setUser] = useState(null);
   useEffect(() => {
@@ -94,20 +97,22 @@ export default function TaskDetailsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
       <Text style={styles.title}>{task.name}</Text>
       <Text style={[styles.subtitle,{ color: task.is_done ? 'green' : 'red' }]} numberOfLines={1} ellipsizeMode="tail">{task.is_done ? 'Wykonane' : 'Nie wykonane'}</Text>
       <Text style={styles.subtitle}>
         Termin zadania: {new Date(task.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
       <Text style={styles.subtitle}>Miejsce zadania: {task.place}</Text>
-      <Text style={styles.subtitleSecondary}>Dodał: {user?.email}</Text>
-      <Text style={styles.subtitleSecondary}>
-        Data dodania: {new Date(task.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
-      </Text>
-      <Text style={styles.subtitleSecondary}>
-        Godzina dodania: {new Date(task.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
-      </Text>
+      <View style={styles.secondariesBox}>  
+        <Text style={styles.subtitleSecondary}>Dodał: {user?.email}</Text>
+        <Text style={styles.subtitleSecondary}>
+          Data dodania: {new Date(task.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
+        </Text>
+        <Text style={styles.subtitleSecondary}>
+          Godzina dodania: {new Date(task.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+      </View>
       <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Przejdź do Listy Zadań</Text>
@@ -137,7 +142,11 @@ const styles = StyleSheet.create({
   subtitleSecondary: {
     fontSize: 16,
     color: 'gray',
+    paddingTop: 8,
   },
+  secondariesBox: {
+    marginTop: 8,
+  },  
   buttonText: {
     fontSize: 20,
     fontWeight: 700,

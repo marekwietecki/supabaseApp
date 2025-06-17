@@ -16,9 +16,10 @@ import { useFocusEffect } from '@react-navigation/native';
 export default function HomeScreen() {
   const [tasks, setTasks] = useState([]);
   const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -119,7 +120,8 @@ export default function HomeScreen() {
           </View>
 
           <SectionList
-            sections={[{ title: 'Lista Zakupów', data: sortedTasks }]}
+            style={{paddingTop: 12}}
+            sections={[{ title: 'Lista Zadań', data: sortedTasks }]}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.item}>
@@ -141,7 +143,7 @@ export default function HomeScreen() {
                         }}
                       >
                         <Text
-                          style={styles.itemName}
+                           style={[styles.itemName, { flex: 1, minWidth: 0, marginRight: 8 }]}
                           numberOfLines={1}
                           ellipsizeMode="tail"
                         >
@@ -215,32 +217,29 @@ const styles = StyleSheet.create({
     gap: 8,
     width: '100%',
     marginTop: '-12%',
-    marginBottom: '6%',
-  },
-  wrapper: {
-    flex: 1,
-    paddingHorizontal: '4%',
-    backgroundColor: 'white',
-    width: '100%',
-    maxWidth: 600,
+    marginHorizontal: '7%',
   },
   h1: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
     marginLeft: '2%',
     color: '#666',
     alignSelf: 'center',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
   container: {
     flex: 1,
     backgroundColor: 'white',
-    paddingHorizontal: '4%',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wrapper: {
+    flex: 1,
+    //backgroundColor: 'green',
+    width: '100%',
+    maxWidth: 600,
+    justifyContent: 'center',
+    marginTop: '6%',
+    gap: 8,
   },
   header: {
     fontSize: 28,
@@ -253,19 +252,31 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 20,
+    paddingVertical: 16,
+    marginVertical: 8,
     paddingHorizontal: 8,
+    marginHorizontal: '6%',
     alignItems: 'center',
     borderBottomWidth: 0,
+    overflow: 'visible',
+    backgroundColor: 'white', 
+    borderRadius: 24, 
+    elevation: 5, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 0 }, 
+    shadowOpacity: 0.07,
+    shadowRadius: 16, 
   },
   itemName: {
     fontSize: 20,
     fontWeight: 600,
     paddingBottom: 8,
+    paddingLeft: 8,
   },
   itemText: {
     fontSize: 14,
     paddingVertical: 2,
+    paddingLeft: 8,
   },
   itemTextSecondary: {
     fontSize: 14,

@@ -58,7 +58,7 @@ export default function App() {
           <Text> User Details Page</Text>
         </Link>
         <TouchableOpacity onPress={doLogout} style={styles.buttonContainer}>
-          <Text style={styles.buttonText}>Log Out</Text>
+          <Text style={styles.buttonText}>Wyloguj się</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

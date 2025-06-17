@@ -169,5 +169,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 24,
     borderColor: 'gray',
+    maxWidth: 600,
+    alignItems: 'center',
   },
 });

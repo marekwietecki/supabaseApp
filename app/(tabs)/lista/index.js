@@ -169,18 +169,19 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.filterRow}>
-            <Text style={styles.h2}>{dateFilterLabel}</Text>
-            {dateFilter && (
-              <TouchableOpacity
-                style={styles.clearFilterButton}
-                onPress={() => {
-                  setDateFilter(null);
-                  setDateFilterLabel('Wybierz datę');
-                }}
-              >
-                <Text style={styles.clearFilterText}>Usuń</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.filterResult}>  
+              <Text style={styles.h2}>{dateFilter ? "Data: " + dateFilterLabel : "Wybierz datę"}</Text>
+              {dateFilter && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setDateFilter(null);
+                    setDateFilterLabel('Wybierz datę');
+                  }}
+                >
+                  <FontAwesome name="times-circle-o" style={styles.clearFilter} />
+                </TouchableOpacity>
+              )}
+            </View>
             <TouchableOpacity
               style={styles.filterIcon}
               onPress={() => setShowDatePicker(true)}
@@ -205,53 +206,47 @@ export default function HomeScreen() {
           )}
 
           <View style={styles.filterRow}>
-            <Text style={styles.h2}>{placeFilter ? placeFilter : 'Wybierz miejsce'}</Text>
-            {placeFilter && (
-              <TouchableOpacity
-                style={styles.clearFilterButton}
-                onPress={() => setPlaceFilter('')}
-              >
-                <Text style={styles.clearFilterText}>Usuń</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.filterResult}>  
+              <Text style={styles.h2}>{placeFilter ? "Miejsce: " + placeFilter : 'Wybierz miejsce'}</Text>
+              {placeFilter && (
+                <TouchableOpacity
+                  onPress={() => setPlaceFilter('')}
+                >
+                  <FontAwesome name="times-circle-o" style={styles.clearFilter} />
+                </TouchableOpacity>
+              )}
+            </View>
             <TouchableOpacity
-              style={styles.filterIcon}
+              style={filterVisible ? styles.activeFilterIcon : styles.filterIcon}
               onPress={() => setFilterVisible(!filterVisible)}
             >
-              <MaterialIcons name="filter-list" size={24} color="#444444" />
+              <MaterialIcons name="filter-list" size={24} color={filterVisible ? "#1C73B4" : "#444444"} />
             </TouchableOpacity>
-          </View>
-          {filterVisible && (
-            <View style={styles.filterBox}>
-              <TouchableOpacity
-                style={styles.filterButton}
-                onPress={() => setPlaceFilter('')}
-              >
-                <Text
-                  style={[
-                    styles.filterText,
-                    placeFilter === '' && styles.activeFilterText,
-                  ]}
-                >
-                  Wszystkie Miejsca
-                </Text>
-              </TouchableOpacity>
-
-              {uniquePlaces.map((place, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.filterButton}
-                  onPress={() => setPlaceFilter(place)}
-                >
-                  <Text
-                    style={[
-                      styles.filterText,
-                      placeFilter === place && styles.activeFilterText,
-                    ]}
-                  >
-                    {place}
-                  </Text>
-                </TouchableOpacity>
+              </View>
+              {filterVisible && (
+                <View style={styles.filterBox}>
+                  {uniquePlaces.map((place, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.filterButton}
+                      onPress={() => setPlaceFilter(place)}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 6, }}>
+                        <MaterialIcons
+                          name={placeFilter === place ? "radio-button-checked" : "radio-button-unchecked"}
+                          size={20}
+                          color={placeFilter === place ? "#1C73B4" : "#444444"}
+                        />
+                        <Text
+                          style={[
+                            styles.filterText,
+                            placeFilter === place && styles.activeFilterText,
+                          ]}
+                        >
+                          {place}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
               ))}
             </View>
           )}
@@ -316,7 +311,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     onPress={() => removeTaskHandler(item.id)}
                   >
-                    <MaterialIcons name="close" size={28} color="#dc2020" />
+                    <MaterialIcons name="delete" size={28} color="red" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -340,7 +335,7 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    paddingHorizontal: '4%',
+    paddingHorizontal: '3%',
     backgroundColor: 'white',
     width: '100%',
     maxWidth: 600,
@@ -356,7 +351,7 @@ const styles = StyleSheet.create({
   h2: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 2,
     marginLeft: '2%',
     color: '#666',
   },
@@ -374,19 +369,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
-    flex: 1,
+    marginBottom: 10,
   },
   filterIcon: {
     paddingRight: 8,
     paddingBottom: 8,
+    padding: 10,
+    backgroundColor: '#C9E3F6',
+    borderRadius: 8,
+  },
+  activeFilterIcon: {
+    paddingRight: 8,
+    paddingBottom: 8,
+    padding: 10,
+    color: '#1C73B4',
   },
   filterBox: {
     padding: 8,
     borderRadius: 16,
     marginVertical: 12,
     borderWidth: 3,
-    borderColor: 'gray',
+    borderColor: '#1C73B4',
   },
   filterButton: {
     paddingVertical: 10,
@@ -395,10 +398,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingLeft: 8,
     color: 'gray',
+    fontWeight: '500',
   },
   activeFilterText: {
     color: '#222',
-    fontWeight: 'bold',
+    fontWeight: '800',
+    fontSize: 18,
   },
   header: {
     fontSize: 28,
@@ -440,24 +445,16 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#BBBBBB',
   },
-  filterRow: {
+  clearFilter: {
+    fontSize: 22,
+    padding: 1,
+    marginTop: 2,
+    marginLeft:4,
+    color: '#666'
+  },
+  filterResult: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  filterIcon: {
-    padding: 10,
-    backgroundColor: '#ddd',
-    borderRadius: 8,
-  },
-  clearFilterButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  clearFilterText: {
-    color: '#dc2020',
-    fontSize: 14,
-  },
+  }
 });

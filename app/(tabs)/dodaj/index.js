@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import supabase from '../../../lib/supabase-client';
 import { Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -34,7 +34,25 @@ export default function App() {
     "Droga do celu to nie połowa przyjemności, to cała przyjemność. – Jan Paweł II",
     "Nie możesz oczekiwać, że osiągniesz nowe cele, jeśli nie podejmiesz działania. – Les Brown",
     "Każde zadanie, które wykonujesz, przybliża Cię do miejsca, w którym chcesz być. – Nieznany autor",
+    "Nasza największa chwała nie polega na tym, że nigdy nie upadamy, ale na tym, że podnosimy się za każdym razem, gdy upadamy. – Konfucjusz",
+    "Nigdy się nie poddawaj nigdy, przenigdy! W niczym, czy to dużym, czy to małym – nigdy się nie poddawaj. – Winston Churchill ",
+    "To zawsze wydaje się niemożliwe, dopóki się tego nie dokonasz. – Nelson Mandela",
+    "Jeśli przechodzisz przez piekło, kontynuuj. – Winston Churchill",
+    "Porażka jest tylko okazją, by zacząć od nowa, tym razem mądrzej. – Henry Ford",
+    "Nasza największa chwała nie polega na tym, że nigdy nie upadamy, ale na tym, że podnosimy się za każdym razem, gdy upadamy – Konfucjusz",
+    "Podróż tysiąca mil zaczyna się od jednego kroku. – Lao Tzu",
+    "Nie ważne jak wolno idziesz, dopóki nie przestajesz. – Konfucjusz",
+    "Sukces to suma małych wysiłków, powtarzanych dzień po dniu. – Robert Collier",
+    "Wielkie rzeczy nie są robione impulsem, ale serią małych kroków połączonych razem. – Vincent van Gogh",
+    "Małe kroki prowadzą do wielkich zmian.",
   ];
+
+  useEffect(() => {
+    if (!selectedQuote) {
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      setSelectedQuote(randomQuote);
+    }
+  }, []);
 
   async function handleAddTask() {
     if (!taskName || !taskDate || !taskPlace) {
@@ -173,7 +191,7 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    paddingHorizontal: '4%',
+    paddingHorizontal: '3%',
     paddingVertical: '4%',
     backgroundColor: 'white',
     width: '100%',
