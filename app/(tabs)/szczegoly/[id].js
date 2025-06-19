@@ -9,6 +9,8 @@ import supabase from '../../../lib/supabase-client';
 import { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import NetInfo from '@react-native-community/netinfo';
+import { Platform, Linking } from 'react-native';
+
 
 export default function TaskDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -130,6 +132,23 @@ export default function TaskDetailsScreen() {
         Termin zadania: {new Date(task.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
       <Text style={styles.subtitle}>Miejsce zadania: {task.place}</Text>
+      {task.latitude && task.longitude && (
+        <TouchableOpacity
+          style={[styles.mapButton, { marginBottom: 16 }]}
+          onPress={() => {
+            const lat = task.latitude;
+            const lon = task.longitude;
+            const label = encodeURIComponent(task.place || 'Zadanie');
+            const url = Platform.select({
+              ios: `http://maps.apple.com/?ll=${lat},${lon}&q=${label}`,
+              android: `geo:${lat},${lon}?q=${lat},${lon}(${label})`,
+            });
+            Linking.openURL(url);
+          }}
+        >
+          <Text style={styles.mapButtonText}>📍 Otwórz w mapach</Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.secondariesBox}>  
         <Text style={styles.subtitleSecondary}>Dodał: {user?.email}</Text>
         <Text style={styles.subtitleSecondary}>
@@ -197,5 +216,17 @@ const styles = StyleSheet.create({
     color: '#2196F3',
     fontSize: 16,
     fontWeight: 500,
+  },
+  mapButton: {
+    backgroundColor: '#2196F3',
+    padding: 10,
+    marginTop: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  mapButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

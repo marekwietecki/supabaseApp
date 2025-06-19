@@ -77,6 +77,10 @@ export default function App() {
             {user?.email}
           </Text>
         </View>
+        <Link href="/profil/location">
+          <FontAwesome size={16} name="map-marker" color="gray" />
+          <Text style={{ fontSize: 16 }}> Moja lokalizacja </Text>
+        </Link>
         <Link href="/profil/passwordChange">
           <FontAwesome size={16} name="lock" color="gray" />
           <Text style={{ fontSize: 16 }}> Zmień Hasło</Text>

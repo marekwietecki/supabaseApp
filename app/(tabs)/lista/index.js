@@ -31,7 +31,7 @@ export default function HomeScreen() {
 
   // Dynamiczna orientacja
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-  const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;
+  const dynamicPaddingTop = screenWidth > 914 ? '0%' : 0;
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {

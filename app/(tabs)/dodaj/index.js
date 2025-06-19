@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo'
+import * as Location from 'expo-location';
 
 export default function App() {
   const [taskName, setTaskName] = useState('');
@@ -89,6 +90,19 @@ export default function App() {
       return;
     }
     
+    // Próbujemy wykonać geocoding dla wprowadzonego adresu.
+    let geocoded = null;
+    try {
+      const results = await Location.geocodeAsync(taskPlace);
+      if (results && results.length > 0) {
+        geocoded = results[0];
+      }
+    } catch (error) {
+      console.log("Geocode error:", error);
+    }
+    
+    // Jeśli geocoder coś znajdzie, używamy wprowadzonego adresu (taskPlace) jako nazwy miejsca
+    // i dodajemy do rekordu koordynaty. W przeciwnym wypadku, wpisujemy po prostu to, co użytkownik wpisał.
     const newTask = {
       name: taskName,
       date: taskDate.toISOString(),
@@ -96,6 +110,11 @@ export default function App() {
       creator_id: session.user.id,
     };
 
+    if (geocoded) {
+      newTask.latitude = geocoded.latitude;
+      newTask.longitude = geocoded.longitude;
+    }
+    
     const { error } = await supabase.from('tasks').insert([newTask]);
 
     if (error) {
