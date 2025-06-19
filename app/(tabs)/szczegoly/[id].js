@@ -8,17 +8,25 @@ import {
 import supabase from '../../../lib/supabase-client';
 import { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { MaterialIcons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function TaskDetailsScreen() {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
   const [task, setTask] = useState(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '8%';
 
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsOnline(state.isConnected && state.isInternetReachable !== false);
+    });
+    return () => unsubscribe();
+  }, []);
   const [user, setUser] = useState(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -92,10 +100,28 @@ export default function TaskDetailsScreen() {
     if (id) fetchTaskDetails();
   }, [id]);
 
+  // Jeśli task jeszcze nie został pobrany:
   if (!task) {
-    return <Text>Ładowanie danych...</Text>;
+    return (
+      <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
+        <View style={styles.wrapper}>
+          {isOnline ? (
+            <Text style={styles.loadingText}>Ładowanie danych...</Text>
+          ) : (
+            <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1, paddingLeft: '-6%', paddingTop: '-8%', }}>
+              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+                🔌 Brak połączenia z internetem
+              </Text>
+              <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+                Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
   }
-
+ 
   return (
     <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
       <Text style={styles.title}>{task.name}</Text>

@@ -72,7 +72,7 @@ export default function HomeScreen() {
       .eq('creator_id', userId);
 
     if (error) {
-      Alert.alert('Błąd Pobierania z BD', error.message);
+      console.log('Błąd Pobierania z BD', error.message);
     } else {
       setTasks([...data]);
       // Zapisz pobrane dane do AsyncStorage jako lokalny cache
@@ -267,16 +267,16 @@ export default function HomeScreen() {
     return new Date(a.date) - new Date(b.date);
   });
 
+  const isFiltered = !!dateFilter || !!placeFilter;
+  const nothingToShow = isFiltered
+    ? 'Brak wyników dla wybranych filtrów.'
+    : 'Nie masz jeszcze żadnych zadań.';
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, title: 'Lista Zadań' }} />
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
-          {/*
-          <View style={styles.titleContainer}>
-            <Text style={styles.h1}>Twoja lista zadań</Text>
-          </View>
-          */}
           <View style={styles.filterRow}>
             <View style={styles.filterResult}>  
               <Text style={styles.h2}>{dateFilter ? "Data: " + dateFilterLabel : "Wybierz datę"}</Text>
@@ -359,74 +359,89 @@ export default function HomeScreen() {
               ))}
             </View>
           )}
-          <SectionList
-            sections={[{ title: 'Lista Zadań', data: filteredTasks }]}
-            keyExtractor={(item) => item.id.toString()}
-            style={{ backgroundColor: '#E6ECF0', flex: 1, borderRadius: 28, paddingHorizontal: 12,  marginTop: 4, elevation: 2 }}
-            contentContainerStyle={{ gap:12, paddingVertical: 4,}}
-            renderItem={({ item }) => (
-              <View style={ item.is_done ? styles.itemDone : styles.item}>
-                <TouchableOpacity
-                  onPress={() =>
-                    toggleDoneHandler(item.id, item.is_done)
-                  }
-                  style={styles.itemRow}
-                >
-                  {item.is_done ? (
-                    <FontAwesome
-                      name="check-square"
-                      size={24}
-                      color="green"
-                      style={styles.itemIcon}
-                    />
-                  ) : (
-                    <FontAwesome
-                      name="square-o"
-                      size={24}
-                      color="gray"
-                      style={styles.itemIcon}
-                    />
-                  )}
-                  <Text
-                    style={[
-                      styles.itemText,
-                      item.is_done && styles.done,
-                    ]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {item.name}
+          {filteredTasks.length === 0 ? (
+            <View style={{ paddingTop: 20, alignItems: 'center' }}>
+              <Text style={{ color: 'black', fontSize: 18, textAlign: 'center', fontWeight: '800', }}>
+                 {isFiltered ? 'Nie masz żadnych zadań dla tych filtrów.\nZmodyfikuj je, aby otrzymać listę zadań.' : 'Nie masz jeszcze żadnych zadań.\nDodaj zadania i wróc do listy.'}
+              </Text>
+            </View>
+          ) : (  
+            <SectionList
+              sections={[{ title: 'Lista Zadań', data: filteredTasks }]}
+              keyExtractor={(item) => item.id.toString()}
+              style={{ backgroundColor: '#E6ECF0', flex: 1, borderRadius: 28, paddingHorizontal: 12,  marginTop: 4, elevation: 2 }}
+              contentContainerStyle={{ gap:12, paddingVertical: 4,}}
+              ListEmptyComponent={
+                <View style={{ paddingVertical: 0, alignItems: 'flex-start' }}>
+                  <Text style={{ color: 'gray', fontSize: 16, textAlign: 'center' }}>
+                    📭 {nothingToShow}
                   </Text>
-                </TouchableOpacity>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 12,
-                    alignItems: 'center',
-                    minWidth: 40,
-                    paddingLeft: 8,
-                  }}
-                >
-                  <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
-                    <TouchableOpacity
-                    >
-                      <MaterialIcons
-                        name="info-outline"
-                        size={22}
-                        color={ item.is_done ? '#45FAFF' : "#2196F3"}
-                      />
-                    </TouchableOpacity>
-                  </Link>
-                  <TouchableOpacity
-                    onPress={() => removeTaskHandler(item.id)}
-                  >
-                    <MaterialIcons name="delete" size={24} color={item.is_done ? 'pink' : 'red'}/>
-                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-            renderSectionHeader={() => null}
-          />
+              }
+              renderItem={({ item }) => (
+                <View style={ item.is_done ? styles.itemDone : styles.item}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      toggleDoneHandler(item.id, item.is_done)
+                    }
+                    style={styles.itemRow}
+                  >
+                    {item.is_done ? (
+                      <FontAwesome
+                        name="check-square"
+                        size={24}
+                        color="green"
+                        style={styles.itemIcon}
+                      />
+                    ) : (
+                      <FontAwesome
+                        name="square-o"
+                        size={24}
+                        color="gray"
+                        style={styles.itemIcon}
+                      />
+                    )}
+                    <Text
+                      style={[
+                        styles.itemText,
+                        item.is_done && styles.done,
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: 12,
+                      alignItems: 'center',
+                      minWidth: 40,
+                      paddingLeft: 8,
+                    }}
+                  >
+                    <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
+                      <TouchableOpacity
+                      >
+                        <MaterialIcons
+                          name="info-outline"
+                          size={22}
+                          color={ item.is_done ? '#45FAFF' : "#2196F3"}
+                        />
+                      </TouchableOpacity>
+                    </Link>
+                    <TouchableOpacity
+                      onPress={() => removeTaskHandler(item.id)}
+                    >
+                      <MaterialIcons name="delete" size={24} color={item.is_done ? 'pink' : 'red'}/>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              renderSectionHeader={() => null}
+            />
+          )}
         </View>
       </View>
     </>
@@ -474,7 +489,6 @@ const styles = StyleSheet.create({
     marginRight: 6,
     paddingBottom: 8,
     padding: 10,
-    //backgroundColor: '#E6EDFC', //'#C9E3F6'
     borderRadius: 8,
   },
   activeFilterIcon: {
@@ -520,7 +534,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingRight: 8,
     alignItems: 'center',
-    backgroundColor: 'white',//'#CED6DB',
+    backgroundColor: 'white',
     elevation: 2, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 0 }, 
@@ -535,7 +549,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingRight: 8,
     alignItems: 'center',
-    backgroundColor: 'white',//'#CED6DB',
+    backgroundColor: 'white',
     elevation: 1, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 0 }, 
@@ -583,11 +597,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   }
 });
-{/*titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-    marginTop: '-12%',
-    marginBottom: '6%',
-  },*/}

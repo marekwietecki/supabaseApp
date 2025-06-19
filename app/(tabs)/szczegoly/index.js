@@ -12,11 +12,13 @@ import { Link, Stack } from 'expo-router';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function HomeScreen() {
   const [tasks, setTasks] = useState([]);
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;
@@ -30,23 +32,45 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user);
-      } else {
-        Alert.alert('Error accessing User data');
-      }
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsOnline(state.isConnected && state.isInternetReachable !== false);
     });
+    return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (isOnline) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          setUser(user);
+        } else {
+          console.log('Error accessing User data');
+        }
+      });
+    } else {
+      // Jeśli offline, możesz pozostawić user z poprzedniego stanu lub wyświetlić komunikat,
+      // że dane użytkownika mogą być niedostępne, ale przynajmniej nie próbujesz ich pobierać.
+      console.log('Offline – nie pobieram danych użytkownika');
+    }
+  }, [isOnline]);
+
   async function fetchTasks(userId) {
+    if (!isOnline) {
+      // Jeśli offline, po prostu kończymy funkcję, nie wyświetlając błędu,
+      // bo użytkownik jest już informowany o braku sieci.
+      console.log("Offline - pomijam pobieranie zadań");
+      return;
+    }
+    
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('creator_id', userId);
 
     if (error) {
-      Alert.alert('Błąd Pobierania z BD', error.message);
+      // Możesz rozważyć inne sprawdzanie błędów,
+      // ale jeśli error wynika z braku sieci, być może warto go pominąć
+      console.log('Błąd pobierania z BD:', error.message);
     } else {
       setTasks([...data]);
     }
@@ -121,13 +145,9 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{ headerShown: true, title: 'Szczegóły Zadań' }}
       />
+      {isOnline ? (
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
-          {/* 
-          <View style={styles.titleContainer}>
-            <Text style={styles.h1}>Twoje Zadania</Text>
-          </View>
-          */}
           <SectionList
             contentContainerStyle={{ paddingVertical: '4%' }}
             sections={[{ title: 'Lista Zadań', data: sortedTasks }]}
@@ -189,22 +209,6 @@ export default function HomeScreen() {
                       >
                         Miejsce zadania: {item.place}
                       </Text>
-                      {/*
-                      <Text
-                        style={styles.itemTextSecondary}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        Dodał: {user?.email}
-                      </Text>
-                      <Text
-                        style={styles.itemTextSecondary}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        Data dodania: {new Date(item.created_at).toLocaleDateString('pl-PL').replace(/\./g, '/')}
-                      </Text>
-                      */}
                     </TouchableOpacity>
                   </Link>
                 </View>
@@ -215,13 +219,21 @@ export default function HomeScreen() {
           />
         </View>
       </View>
+      ) : (
+            <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+                🔌 Brak połączenia z internetem
+              </Text>
+              <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+                Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
+              </Text>
+            </View>
+      )} 
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  
-  
   container: {
     flex: 1,
     backgroundColor: 'white',
@@ -233,7 +245,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 600,
     justifyContent: 'center',
-    gap: 8,  },
+    gap: 8,  
+  },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -277,20 +290,3 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
 });
-{/* 
-  h1: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginLeft: '2%',
-    color: '#666',
-    alignSelf: 'center',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-    marginTop: '-12%',
-    marginHorizontal: '7%',
-  },
-  */}

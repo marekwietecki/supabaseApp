@@ -1,15 +1,15 @@
 # 📝 Tasker — Twoja Lista Zadań
 
-**Mobilna aplikacja React Native** do zarządzania zadaniami — z przyjemnym interfejsem, filtrowaniem, widokiem szczegółów, motywacyjnymi cytatami i nutką personalizacji. 🚀
+**Mobilna aplikacja React Native** do zarządzania zadaniami — z przyjemnym interfejsem, filtrowaniem, widokiem szczegółów i nutką motywacji. 🚀
 
 ---
 
 ## ✨ Funkcje
 
 - 📅 Dodawanie zadań z datą i lokalizacją  
-- 🔎 Filtrowanie zadań:
-  - według daty (z date pickerem + opcja czyszczenia)
-  - według miejsca (radio buttony + czyszczenie filtra)
+- 🔍 Filtrowanie zadań:
+  - według daty (z date pickerem + opcja czyszczenia filtra)
+  - według miejsca (radio buttony + opcja czyszczenia filtra)
 - ✅ Oznaczanie zadań jako wykonane / niewykonane
 - ➕ Dodawanie i usuwanie zadań z bazy danych Supabase
 - 💬 Motywacyjne cytaty podczas dodawania zadań
@@ -21,7 +21,7 @@
 
 - React Native + Expo  
 - Supabase jako backend (Auth + Database)  
-- AsyncStorage (obsługa offline)  
+- AsyncStorage (obsługa odznaczania zadań offline)  
 - NetInfo (status połączenia)  
 - Ikonki: FontAwesome, MaterialIcons  
 - Stylizacja własna (StyleSheet)
@@ -31,7 +31,7 @@
 ## 📦 Instalacja
 
 ```bash
-git clone https://github.com/twoj-login/tasker.git
-cd tasker
+git clone https://github.com/marekwietecki/supabaseApp
+cd ./supabaseApp
 npm install
 npx expo start

@@ -12,6 +12,7 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
+import NetInfo from '@react-native-community/netinfo'
 
 export default function App() {
   const [taskName, setTaskName] = useState('');
@@ -24,6 +25,7 @@ export default function App() {
   const [isTwoFocused, setTwoFocused] = useState(false);
   const [isThreeFocused, setThreeFocused] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState('');
+  const [isOnline, setIsOnline] = useState(true);
 
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const dynamicPaddingTop = screenWidth > 500 ? '2%' : 0;
@@ -37,6 +39,12 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsOnline(state.isConnected && state.isInternetReachable !== false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const quotes = [
     "Wyznaczaj sobie wysokie cele i nie przestawaj, dopóki ich nie osiągniesz. – Bo Jackson",
@@ -106,16 +114,13 @@ export default function App() {
   }
 
   return (
+    
     <>
       <Stack.Screen
         options={{ headerShown: true, title: 'Dodawanie Zadań' }}
       />
+      {isOnline ? (
       <View style={styles.container}>
-        {/*
-        <Text type="title" style={styles.h2}>
-          Dodaj nowe zadanie
-        </Text>
-        */}
         <View style={[styles.wrapper, { paddingTop: dynamicPaddingTop }, {justifyContent: dynamicJustify}]}>
           <TextInput
             placeholder="🎯  Nazwa zadania"
@@ -190,15 +195,21 @@ export default function App() {
           ) : null}
         </View>
       </View>
+      ) : (
+        <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+          <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+            🔌 Brak połączenia z internetem
+          </Text>
+          <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+            Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
+          </Text>
+        </View>
+      )}  
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
   container: {
     flex: 1,
     backgroundColor: 'white',
