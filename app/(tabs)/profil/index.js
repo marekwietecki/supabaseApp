@@ -57,6 +57,10 @@ export default function App() {
           <FontAwesome size={16} name="info-circle" color="gray" />
           <Text> User Details Page</Text>
         </Link>
+        <Link href="/profil/passwordChange">
+          <FontAwesome size={16} name="lock" color="gray" />
+          <Text style={{fontSize: 16}}> Zmień Hasło</Text>
+        </Link>
         <TouchableOpacity onPress={doLogout} style={styles.buttonContainer}>
           <Text style={styles.buttonText}>Wyloguj się</Text>
         </TouchableOpacity>

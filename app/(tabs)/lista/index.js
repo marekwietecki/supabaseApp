@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,8 +14,11 @@ import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function HomeScreen() {
+  // Filtry i dane
   const [placeFilter, setPlaceFilter] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -24,9 +27,18 @@ export default function HomeScreen() {
   const [dateFilter, setDateFilter] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateFilterLabel, setDateFilterLabel] = useState('Wybierz datę');
+  const [offlineQueue, setOfflineQueue] = useState([]);
 
-  const screenWidth = Dimensions.get('window').width;
-  const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
+  // Dynamiczna orientacja
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenWidth(window.width);
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -38,6 +50,21 @@ export default function HomeScreen() {
     });
   }, []);
 
+  // 1. Funkcja ładowania danych offline z AsyncStorage – wywołujemy, gdy nie ma sesji
+  async function loadOfflineTasks() {
+    try {
+      const json = await AsyncStorage.getItem('local-tasks');
+      if (json !== null) {
+        const localData = JSON.parse(json);
+        setTasks(localData);
+        console.log('📦 Zadania załadowane lokalnie (offline)');
+      }
+    } catch (e) {
+      console.log('❌ Błąd ładowania z AsyncStorage', e);
+    }
+  }
+
+  // 2. Funkcja pobierania zadań z Supabase oraz zapisywania ich lokalnie
   async function fetchTasks(userId) {
     const { data, error } = await supabase
       .from('tasks')
@@ -48,8 +75,18 @@ export default function HomeScreen() {
       Alert.alert('Błąd Pobierania z BD', error.message);
     } else {
       setTasks([...data]);
+      // Zapisz pobrane dane do AsyncStorage jako lokalny cache
+      await AsyncStorage.setItem('local-tasks', JSON.stringify(data));
+      console.log('📝 Zadania zapisane lokalnie');
     }
   }
+
+  // Przy starcie, jeśli brak sesji – spróbuj załadować dane offline
+  useEffect(() => {
+    if (!session?.user) {
+      loadOfflineTasks();
+    }
+  }, []);
 
   useEffect(() => {
     let lastAlertTime = 0;
@@ -58,7 +95,6 @@ export default function HomeScreen() {
       (_event, session) => {
         if (!session?.user) {
           console.log('🔴 Wylogowany, próbuję pokazać alert...');
-
           const now = Date.now();
           if (now - lastAlertTime > 600000) {
             Alert.alert('Uwaga', 'Nie jesteś zalogowany.');
@@ -84,6 +120,7 @@ export default function HomeScreen() {
     if (session?.user) {
       fetchTasks(session.user.id);
 
+      // Subskrypcja zmian w tabeli 'tasks'
       const channel = supabase
         .channel('tasks_changes')
         .on(
@@ -111,31 +148,105 @@ export default function HomeScreen() {
     }, [session]),
   );
 
-  async function toggleDoneHandler(id, isDone) {
+  // Funkcja zmieniająca status zadania (toggle is_done) i aktualizująca cache offline
+ async function toggleDoneHandler(id, isDone) {
+    const netState = await NetInfo.fetch();
+
+    if (!netState.isConnected) {
+      setTasks(prev => {
+        const updatedTasks = prev.map(task =>
+          task.id === id ? { ...task, is_done: !isDone } : task
+        );
+        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
+        return updatedTasks;
+      });
+      
+      const newUpdate = { id, newValue: !isDone };
+      
+      // Używamy funkcjonlnej aktualizacji dla offlineQueue
+      setOfflineQueue(prevQueue => {
+        const newQueue = [...prevQueue, newUpdate];
+        AsyncStorage.setItem('offline-queue', JSON.stringify(newQueue));
+        Alert.alert(
+          "Offline",
+          "Zmiana została zapisana lokalnie. Zostanie zsynchronizowana, gdy wróci internet."
+        );
+        return newQueue;
+      });
+      return;
+    }
+
+    // Jeśli jest połączenie, próbujemy zaktualizować w Supabase
     const { error } = await supabase
-      .from('products')
+      .from('tasks')
       .update({ is_done: !isDone })
       .eq('id', id);
 
     if (error) {
-      Alert.alert('Błąd Kupowania', error.message);
+      Alert.alert('Błąd aktualizacji', error.message);
     } else {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id
-            ? { ...task, is_done: !isDone }
-            : task,
-        ),
-      );
+      setTasks(prev => {
+        const updatedTasks = prev.map(task =>
+          task.id === id ? { ...task, is_done: !isDone } : task
+        );
+        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
+        return updatedTasks;
+      });
+    }
+  }
+  async function syncOfflineQueue() {
+    // Spróbuj załadować offline queue z AsyncStorage, jeśli jest
+    const storedQueue = await AsyncStorage.getItem('offline-queue');
+    let updates = storedQueue ? JSON.parse(storedQueue) : offlineQueue;
+
+    if (updates.length === 0) return;
+
+    for (const update of updates) {
+      const { id, newValue } = update;
+      // Próbujemy zaktualizować każdy task w Supabase
+      const { error } = await supabase
+        .from('tasks')
+        .update({ is_done: newValue })
+        .eq('id', id);
+
+      if (error) {
+        console.log("Błąd synchronizacji dla tasku", id, ":", error.message);
+        // Możesz zdecydować się pozostawić tę zmianę w kolejce, żeby spróbować ponownie później.
+      }
+    }
+
+    // Po synchronizacji, wyczyść kolejkę
+    setOfflineQueue([]);
+    await AsyncStorage.removeItem('offline-queue');
+
+    // Opcjonalnie odśwież listę zadań z serwera
+    if (session && session.user) {
+      fetchTasks(session.user.id);
     }
   }
 
+  useEffect(() => {
+    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
+      if (state.isConnected) {
+        syncOfflineQueue();
+      }
+    });
+
+    return () => unsubscribeNetInfo();
+  }, [offlineQueue, session]);
+
+
+  // Funkcja usuwająca zadanie i aktualizująca cache offline
   async function removeTaskHandler(id) {
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
       Alert.alert('Błąd Usuwania', error.message);
     } else {
-      setTasks((prev) => prev.filter((task) => task.id !== id));
+      setTasks((prev) => {
+        const updatedTasks = prev.filter((task) => task.id !== id);
+        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
+        return updatedTasks;
+      });
     }
   }
 
@@ -143,19 +254,16 @@ export default function HomeScreen() {
 
   const filteredTasks = tasks.filter((task) => {
     const matchesPlace = placeFilter ? task.place === placeFilter : true;
-    const matchesDate = dateFilter ? new Date(task.date).toDateString() === dateFilter.toDateString() : true;
+    const matchesDate = dateFilter
+      ? new Date(task.date).toDateString() === dateFilter.toDateString()
+      : true;
     return matchesPlace && matchesDate;
   });
 
   filteredTasks.sort((a, b) => {
-    // Najpierw porównujemy status wykonania. Zakładamy, że false (0) oznacza niewykonane,
-    // a true (1) – wykonane. Dzięki temu niewykonane zadania będą wyświetlone jako pierwsze.
     if (a.is_done !== b.is_done) {
       return a.is_done - b.is_done;
     }
-    // Jeżeli oba zadania mają ten sam status, sortujemy je według daty.
-    // Tworzymy obiekty Date na podstawie a.date i b.date,
-    // a następnie odejmujemy je, co spowoduje sortowanie od najstarszych do najnowszych.
     return new Date(a.date) - new Date(b.date);
   });
 
@@ -164,10 +272,11 @@ export default function HomeScreen() {
       <Stack.Screen options={{ headerShown: true, title: 'Lista Zadań' }} />
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
+          {/*
           <View style={styles.titleContainer}>
             <Text style={styles.h1}>Twoja lista zadań</Text>
           </View>
-
+          */}
           <View style={styles.filterRow}>
             <View style={styles.filterResult}>  
               <Text style={styles.h2}>{dateFilter ? "Data: " + dateFilterLabel : "Wybierz datę"}</Text>
@@ -251,10 +360,12 @@ export default function HomeScreen() {
             </View>
           )}
           <SectionList
-            sections={[{ title: 'Lista Zakupów', data: filteredTasks }]}
+            sections={[{ title: 'Lista Zadań', data: filteredTasks }]}
             keyExtractor={(item) => item.id.toString()}
+            style={{ backgroundColor: '#E6ECF0', flex: 1, borderRadius: 28, paddingHorizontal: 12,  marginTop: 4, elevation: 2 }}
+            contentContainerStyle={{ gap:12, paddingVertical: 4,}}
             renderItem={({ item }) => (
-              <View style={styles.item}>
+              <View style={ item.is_done ? styles.itemDone : styles.item}>
                 <TouchableOpacity
                   onPress={() =>
                     toggleDoneHandler(item.id, item.is_done)
@@ -290,28 +401,26 @@ export default function HomeScreen() {
                 <View
                   style={{
                     flexDirection: 'row',
-                    gap: 16,
+                    gap: 12,
                     alignItems: 'center',
-                    gap: 16,
                     minWidth: 40,
                     paddingLeft: 8,
                   }}
                 >
                   <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
                     <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
                     >
                       <MaterialIcons
                         name="info-outline"
-                        size={24}
-                        color="#2196F3"
+                        size={22}
+                        color={ item.is_done ? '#45FAFF' : "#2196F3"}
                       />
                     </TouchableOpacity>
                   </Link>
                   <TouchableOpacity
                     onPress={() => removeTaskHandler(item.id)}
                   >
-                    <MaterialIcons name="delete" size={28} color="red" />
+                    <MaterialIcons name="delete" size={24} color={item.is_done ? 'pink' : 'red'}/>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -325,39 +434,28 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-    marginTop: '-12%',
-    marginBottom: '6%',
-  },
   wrapper: {
     flex: 1,
-    paddingHorizontal: '3%',
+    paddingHorizontal: '2%',
     backgroundColor: 'white',
     width: '100%',
     maxWidth: 600,
+    paddingVertical: '4%',
   },
   h1: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
-    marginLeft: '2%',
+    marginLeft: '3%',
     color: '#666',
     alignSelf: 'center',
   },
   h2: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 2,
-    marginLeft: '2%',
+    marginLeft: '3%',
     color: '#666',
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
   },
   container: {
     flex: 1,
@@ -373,13 +471,15 @@ const styles = StyleSheet.create({
   },
   filterIcon: {
     paddingRight: 8,
+    marginRight: 6,
     paddingBottom: 8,
     padding: 10,
-    backgroundColor: '#C9E3F6',
+    //backgroundColor: '#E6EDFC', //'#C9E3F6'
     borderRadius: 8,
   },
   activeFilterIcon: {
     paddingRight: 8,
+    marginRight: 6,
     paddingBottom: 8,
     padding: 10,
     color: '#1C73B4',
@@ -416,11 +516,33 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 20,
-    paddingHorizontal: 7,
-    borderBottomWidth: 1,
-    borderColor: '#E6E6E9',
+    paddingVertical: 20,
+    paddingLeft: 12,
+    paddingRight: 8,
     alignItems: 'center',
+    backgroundColor: 'white',//'#CED6DB',
+    elevation: 2, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 0 }, 
+    shadowOpacity: 0.07,
+    shadowRadius: 16, 
+    borderRadius: 24,
+  },
+  itemDone: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 20,
+    paddingLeft: 12,
+    paddingRight: 8,
+    alignItems: 'center',
+    backgroundColor: 'white',//'#CED6DB',
+    elevation: 1, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 0 }, 
+    shadowOpacity: 0.07,
+    shadowRadius: 16, 
+    borderRadius: 24,
+    opacity: 40,
   },
   itemText: {
     fontSize: 20,
@@ -441,6 +563,9 @@ const styles = StyleSheet.create({
   itemIcon: {
     marginRight: 8,
   },
+  iconDone: {
+    opacity: 40,
+  },
   done: {
     textDecorationLine: 'line-through',
     color: '#BBBBBB',
@@ -458,3 +583,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   }
 });
+{/*titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    marginTop: '-12%',
+    marginBottom: '6%',
+  },*/}

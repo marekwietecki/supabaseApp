@@ -3,7 +3,14 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          borderTopWidth: 2, // usuwa cienką linię domyślną
+        },
+      }}
+    >
       <Tabs.Screen
         name="lista"
         options={{

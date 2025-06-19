@@ -18,8 +18,16 @@ export default function HomeScreen() {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
 
-  const screenWidth = Dimensions.get('window').width;
-  const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+        setScreenWidth(window.width);
+      });
+    
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -115,12 +123,13 @@ export default function HomeScreen() {
       />
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
+          {/* 
           <View style={styles.titleContainer}>
             <Text style={styles.h1}>Twoje Zadania</Text>
           </View>
-
+          */}
           <SectionList
-            style={{paddingTop: 12}}
+            contentContainerStyle={{ paddingVertical: '4%' }}
             sections={[{ title: 'Lista Zadań', data: sortedTasks }]}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
@@ -211,21 +220,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-    marginTop: '-12%',
-    marginHorizontal: '7%',
-  },
-  h1: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginLeft: '2%',
-    color: '#666',
-    alignSelf: 'center',
-  },
+  
+  
   container: {
     flex: 1,
     backgroundColor: 'white',
@@ -234,13 +230,10 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    //backgroundColor: 'green',
     width: '100%',
     maxWidth: 600,
     justifyContent: 'center',
-    marginTop: '6%',
-    gap: 8,
-  },
+    gap: 8,  },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -284,3 +277,20 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
 });
+{/* 
+  h1: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginLeft: '2%',
+    color: '#666',
+    alignSelf: 'center',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    marginTop: '-12%',
+    marginHorizontal: '7%',
+  },
+  */}

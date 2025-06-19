@@ -30,7 +30,7 @@ export default function Auth() {
       return;
     }
 
-    console.log('Signing in...');
+    console.log('Logowanie...');
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -38,9 +38,9 @@ export default function Auth() {
     });
 
     if (error) {
-      Alert.alert('Sign In Error', error.message);
+      Alert.alert('Błąd logowania', "Wprowadzono niepoprawne dane");
     } else if (data?.user) {
-      console.log('User signed in successfully!', data.user);
+      console.log('Użytkownik pomyślnie zalogowany!', data.user);
     } else {
       console.log('No error, but no user data returned.');
     }
@@ -56,7 +56,7 @@ export default function Auth() {
     });
 
     if (error) {
-      Alert.alert('Sign Up Error', error.message);
+      Alert.alert('Bład Rejestracji', error.message);
     } else if (data?.user) {
       console.log('User signed up successfully!', data.user);
     } else {
@@ -64,7 +64,7 @@ export default function Auth() {
     }
 
     if (!data?.session) {
-      Alert.alert('Please check your inbox for email verification!');
+      Alert.alert('Sprawdź swoją skrzynkę pocztową i potwierdź załozenie konta!');
     }
 
     setLoading(false);
@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 40,
     padding: 12,
+    paddingHorizontal: '7%',
   },
   verticallySpaced: {
     paddingTop: 8,

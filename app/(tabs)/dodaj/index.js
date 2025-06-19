@@ -25,8 +25,18 @@ export default function App() {
   const [isThreeFocused, setThreeFocused] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState('');
 
-  const screenWidth = Dimensions.get('window').width;
-  const dynamicPaddingTop = screenWidth > 600 ? 0 : '20%';
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const dynamicPaddingTop = screenWidth > 500 ? '2%' : 0;
+  const dynamicJustify = screenWidth > 500 ? 'none' : 'center';
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+        setScreenWidth(window.width);
+      });
+    
+    return () => subscription.remove();
+  }, []);
+
 
   const quotes = [
     "Wyznaczaj sobie wysokie cele i nie przestawaj, dopóki ich nie osiągniesz. – Bo Jackson",
@@ -100,13 +110,15 @@ export default function App() {
       <Stack.Screen
         options={{ headerShown: true, title: 'Dodawanie Zadań' }}
       />
-      <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
+      <View style={styles.container}>
+        {/*
         <Text type="title" style={styles.h2}>
           Dodaj nowe zadanie
         </Text>
-        <View style={styles.wrapper}>
+        */}
+        <View style={[styles.wrapper, { paddingTop: dynamicPaddingTop }, {justifyContent: dynamicJustify}]}>
           <TextInput
-            placeholder="Nazwa zadania"
+            placeholder="🎯  Nazwa zadania"
             placeholderTextColor="gray"
             value={taskName}
             onChangeText={setTaskName}
@@ -122,13 +134,19 @@ export default function App() {
             onPress={() => setShowDatePicker(true)}
             style={[
               styles.input,
-              {  borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' }
+              { borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' },
             ]}
-            onFocus={() => setTwoFocused(true)}
-            onBlur={() => setTwoFocused(false)}
+            onPressIn={() => {
+              setTwoFocused(true);
+              setOneFocused(false);
+              setThreeFocused(false);
+            }}
+            onPressOut={() => setTwoFocused(false)}
           >
             <Text style={{ color: taskDate ? 'black' : 'gray', fontSize: 16 }}>
-              {taskDate ? taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/') : 'Wybierz datę'}
+              {taskDate 
+                ? taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/')
+                : '📆  Wybierz datę'}
             </Text>
           </TouchableOpacity>
           {showDatePicker && (
@@ -145,7 +163,7 @@ export default function App() {
             />
           )}
           <TextInput
-            placeholder="Miejsce Zadania"
+            placeholder="📌  Miejsce Zadania"
             placeholderTextColor="gray"
             value={taskPlace}
             onChangeText={setTaskPlace}
@@ -185,16 +203,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     paddingHorizontal: '4%',
-    paddingTop: 100,
     alignItems: 'center',
-    marginTop: -40,
+    
   },
   wrapper: {
     flex: 1,
     paddingHorizontal: '3%',
-    paddingVertical: '4%',
+    paddingVertical: '6%',
     backgroundColor: 'white',
     width: '100%',
+    heigth: '100%',
     maxWidth: 600,
   },
   h2: {
@@ -212,7 +230,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     borderRadius: 24,
     color: 'black',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
   },
@@ -221,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     paddingHorizontal: 38,
     paddingVertical: 14,
-    marginTop: 16,
+    marginTop: 12,
     alignItems: 'center',
     maxWidth: '70%',
     alignSelf: 'center',
