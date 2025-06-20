@@ -46,6 +46,7 @@ export default function TaskDetailsScreen() {
     });
   }, [navigation]);
 
+{/*
   useEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -75,6 +76,7 @@ export default function TaskDetailsScreen() {
       ),
     });
   }, [navigation, router]);
+*/}
 
   useEffect(() => {
     console.log('Otrzymane id z URL:', id);
@@ -108,7 +110,11 @@ export default function TaskDetailsScreen() {
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
           {isOnline ? (
-            <Text style={styles.loadingText}>Ładowanie danych...</Text>
+            <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1, paddingLeft: '-6%', paddingTop: '-8%', }}>
+              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+                Ładowanie danych...            
+              </Text>
+            </View> 
           ) : (
             <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1, paddingLeft: '-6%', paddingTop: '-8%', }}>
               <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
