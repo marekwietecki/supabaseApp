@@ -27,6 +27,21 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="lokalizacja"
+        options={{
+          tabBarLabel: 'Lokalizacja',
+          title: 'lokalizacja',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome
+              size={24}
+              style={{ marginBottom: -3 }}
+              name="map-pin"
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="dodaj"
         options={{
           tabBarLabel: 'Dodaj',

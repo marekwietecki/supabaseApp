@@ -131,7 +131,7 @@ export default function TaskDetailsScreen() {
       <Text style={styles.subtitle}>
         Termin zadania: {new Date(task.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
-      <Text style={styles.subtitle}>Miejsce zadania: {task.place}</Text>
+      <Text style={styles.subtitle}>Adres zadania: {task.place}</Text>
       {task.latitude && task.longitude && (
         <TouchableOpacity
           style={[styles.mapButton, { marginBottom: 16 }]}

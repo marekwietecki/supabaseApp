@@ -19,7 +19,7 @@ export default function App() {
   const [taskName, setTaskName] = useState('');
   const [taskDate, setTaskDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [taskPlace, setTaskPlace] = useState('');
+  const [taskPlace, setTaskPlace] = useState('');//address
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isOneFocused, setOneFocused] = useState(false);
@@ -90,19 +90,16 @@ export default function App() {
       return;
     }
     
-    // Próbujemy wykonać geocoding dla wprowadzonego adresu.
     let geocoded = null;
-    try {
-      const results = await Location.geocodeAsync(taskPlace);
-      if (results && results.length > 0) {
-        geocoded = results[0];
-      }
-    } catch (error) {
-      console.log("Geocode error:", error);
+      try {
+        const results = await Location.geocodeAsync(taskPlace);
+        if (results && results.length > 0) {
+          geocoded = results[0];
+        }
+      } catch (error) {
+        console.log("Geocode error:", error);
     }
     
-    // Jeśli geocoder coś znajdzie, używamy wprowadzonego adresu (taskPlace) jako nazwy miejsca
-    // i dodajemy do rekordu koordynaty. W przeciwnym wypadku, wpisujemy po prostu to, co użytkownik wpisał.
     const newTask = {
       name: taskName,
       date: taskDate.toISOString(),
@@ -133,7 +130,6 @@ export default function App() {
   }
 
   return (
-    
     <>
       <Stack.Screen
         options={{ headerShown: true, title: 'Dodawanie Zadań' }}
@@ -187,7 +183,7 @@ export default function App() {
             />
           )}
           <TextInput
-            placeholder="📌  Miejsce Zadania"
+            placeholder="📌  Adres Zadania"
             placeholderTextColor="gray"
             value={taskPlace}
             onChangeText={setTaskPlace}
@@ -234,7 +230,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingHorizontal: '4%',
     alignItems: 'center',
-    
   },
   wrapper: {
     flex: 1,
