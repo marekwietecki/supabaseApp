@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { FontAwesome } from '@expo/vector-icons';
+import { useWindowDimensions } from 'react-native';
 import NetInfo from '@react-native-community/netinfo'
 import { colors } from '../../../utils/colors';
 import { useTasks } from '../../../contexts/TasksContext';
@@ -18,6 +19,8 @@ export default function LocationScreen() {
     const [nearestTask, setNearestTask] = useState(null);
     const [showManualInput, setShowManualInput] = useState(false);
     const [isOnline, setIsOnline] = useState(true);
+
+    const { width } = useWindowDimensions();
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener((state) => {
@@ -203,7 +206,7 @@ export default function LocationScreen() {
                         </View>
                     ) : (
                         <View>    
-                           <View style={{ marginVertical: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
+                           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
                                 {address && (
                                     <View style={{ maxWidth: '76%' }}>
                                     <Text
@@ -274,59 +277,59 @@ export default function LocationScreen() {
                             </View>
                         )}
 
-                        {location && location.coords && (
-                        <MapView
-                            ref={mapRef}
-                            provider={PROVIDER_GOOGLE}
-                            style={styles.map}
-                            initialRegion={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                            onMapReady={() => {
-                            if (
-                                nearestTask &&
-                                nearestTask.latitude &&
-                                nearestTask.longitude
-                            ) {
-                                const coordinates = [
-                                {
+                        {width <= 900 && location && location.coords && (
+                            <MapView
+                                ref={mapRef}
+                                provider={PROVIDER_GOOGLE}
+                                style={styles.map}
+                                initialRegion={{
                                     latitude: location.coords.latitude,
                                     longitude: location.coords.longitude,
-                                },
-                                {
-                                    latitude: nearestTask.latitude,
-                                    longitude: nearestTask.longitude,
-                                },
-                                ];
-                                mapRef.current.fitToCoordinates(coordinates, {
-                                edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-                                animated: true,
-                                });
-                            }
-                            }}
-                        >
-                            {nearestTask && nearestTask.latitude && nearestTask.longitude && (
-                                <Marker
-                                    coordinate={{
+                                    latitudeDelta: 0.05,
+                                    longitudeDelta: 0.05,
+                                }}
+                                onMapReady={() => {
+                                if (
+                                    nearestTask &&
+                                    nearestTask.latitude &&
+                                    nearestTask.longitude
+                                ) {
+                                    const coordinates = [
+                                    {
+                                        latitude: location.coords.latitude,
+                                        longitude: location.coords.longitude,
+                                    },
+                                    {
                                         latitude: nearestTask.latitude,
                                         longitude: nearestTask.longitude,
-                                    }}
-                                    title="Najbliższe zadanie"
-                                    description={nearestTask.place}
-                                    pinColor="blue"
-                                />
-                            )}
-                            <Marker
-                                coordinate={{
-                                    latitude: location.coords.latitude,
-                                    longitude: location.coords.longitude,
+                                    },
+                                    ];
+                                    mapRef.current.fitToCoordinates(coordinates, {
+                                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                                    animated: true,
+                                    });
+                                }
                                 }}
-                                title="Twoja lokalizacja"
-                            />
-                        </MapView>
+                            >
+                                {nearestTask && nearestTask.latitude && nearestTask.longitude && (
+                                    <Marker
+                                        coordinate={{
+                                            latitude: nearestTask.latitude,
+                                            longitude: nearestTask.longitude,
+                                        }}
+                                        title="Najbliższe zadanie"
+                                        description={nearestTask.place}
+                                        pinColor="blue"
+                                    />
+                                )}
+                                <Marker
+                                    coordinate={{
+                                        latitude: location.coords.latitude,
+                                        longitude: location.coords.longitude,
+                                    }}
+                                    title="Twoja lokalizacja"
+                                />
+                            </MapView>
                         )}
 
                         <View style={{ marginVertical: 8 }}>
