@@ -15,9 +15,9 @@ import { colors } from '../../../utils/colors';
 import { useTasks } from '../../../contexts/TasksContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
-export default function TaskDetailsScreen() {
+export default function DetailsScreen() {
   const { tasks, fetchTasks } = useTasks();
-  const { user } = useAuth(); // ⬅️ tylko user z contextu
+  const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(true);
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;

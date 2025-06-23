@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,7 +6,6 @@ import {
   SectionList,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { Link, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,13 +13,12 @@ import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../../utils/colors'
 import { useTasks } from '../../../contexts/TasksContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
-export default function HomeScreen() {
-  const { tasks, fetchTasks, toggleDoneHandler, removeTaskHandler, setTasks } = useTasks();
+export default function ListScreen() {
+  const { tasks, fetchTasks, toggleDoneHandler, removeTaskHandler } = useTasks();
   const { session, user } = useAuth();
 
   const [placeFilter, setPlaceFilter] = useState('');
@@ -42,8 +40,8 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (session?.user) {
-      fetchTasks(session.user.id);
+    if (user) {
+      fetchTasks(user.id);
 
       const channel = supabase
         .channel('tasks_changes')
@@ -145,8 +143,9 @@ export default function HomeScreen() {
             />
           )}
 
-          <View style={styles.filterRow}>
-            <View style={[styles.filterResult, {flex: 1, justifyContent: 'space-between'}]}>
+         <View style={styles.filterRow}>
+          <View style={[styles.filterResult, { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
               <Text
                 style={styles.h2}
                 numberOfLines={1}
@@ -158,15 +157,13 @@ export default function HomeScreen() {
                 <TouchableOpacity onPress={() => setPlaceFilter('')}>
                   <FontAwesome
                     name="times-circle-o"
-                    style={styles.clearFilter}
+                    style={[styles.clearFilter, { marginLeft: 6 }]}
                   />
                 </TouchableOpacity>
               )}
             </View>
             <TouchableOpacity
-              style={
-                filterVisible ? styles.activeFilterIcon : styles.filterIcon
-              }
+              style={filterVisible ? styles.activeFilterIcon : styles.filterIcon}
               onPress={() => setFilterVisible(!filterVisible)}
             >
               <MaterialIcons
@@ -175,7 +172,10 @@ export default function HomeScreen() {
                 color={filterVisible ? colors.blue700 : colors.gray800}
               />
             </TouchableOpacity>
+
           </View>
+        </View>
+
           {filterVisible && (
             <View style={styles.filterBox}>
               {uniquePlaces.map((place, idx) => (

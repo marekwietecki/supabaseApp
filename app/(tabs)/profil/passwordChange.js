@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   TextInput, 
@@ -11,12 +11,11 @@ import {
   useNavigation,
   useRouter,
 } from 'expo-router';
-import supabase from '../../../lib/supabase-client';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '../../../utils/colors'
 import { useAuth } from '../../../contexts/AuthContext';
 
-const ChangePasswordScreen = () => {
+export default function ChangePasswordScreen () {
   const { changePassword } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
@@ -159,5 +158,3 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 });
-
-export default ChangePasswordScreen;

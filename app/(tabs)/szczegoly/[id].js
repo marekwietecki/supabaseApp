@@ -13,7 +13,7 @@ import { colors } from '../../../utils/colors';
 import { useTasks } from '../../../contexts/TasksContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
-export default function TaskDetailsIDScreen() {
+export default function DetailsIDScreen() {
   const { getTaskById, fetchTaskById, loadOfflineTasks } = useTasks();
   const { user } = useAuth();
   const { id } = useLocalSearchParams();

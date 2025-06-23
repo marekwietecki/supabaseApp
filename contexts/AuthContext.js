@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import supabase from '../lib/supabase-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
@@ -66,7 +66,6 @@ export const AuthProvider = ({ children }) => {
             authListener.subscription?.unsubscribe();
         };
         } else {
-        // offline: próbujemy odczytać cache
         AsyncStorage.getItem('cachedUser')
             .then((cached) => {
             if (cached && isMounted) {

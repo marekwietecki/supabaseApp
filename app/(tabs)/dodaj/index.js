@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import supabase from '../../../lib/supabase-client';
 import { Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -19,7 +18,7 @@ import { useTasks } from '../../../contexts/TasksContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
 
-export default function App() {
+export default function AddScreen() {
   const { addTask } = useTasks(); 
   const { user } = useAuth();
 
@@ -116,7 +115,7 @@ export default function App() {
     }
     
     setLoading(true);
-    const success = await addTask(newTask); // Dodajemy zadanie przy pomocy funkcji z kontekstu
+    const success = await addTask(newTask); 
     setLoading(false);
     
     if (!success) {

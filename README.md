@@ -1,32 +1,45 @@
-# 📝 Tasker — Twoja Lista Zadań
-
-**Mobilna aplikacja React Native** do zarządzania zadaniami — z przyjemnym interfejsem, filtrowaniem, widokiem szczegółów i nutką motywacji. Do dzieła! 🚀
+# 📝 Tasker — Twoja Lista Zadań  
+Mobilna aplikacja React Native do zarządzania zadaniami — z przyjemnym interfejsem, filtrowaniem, geolokalizacją, szczegółowym widokiem i nutką motywacji. Do dzieła! 🚀
 
 ---
 
 ## ✨ Funkcje
 
-- 📅 Dodawanie zadań z datą i lokalizacją  
+- 📅 Dodawanie zadań z datą i lokalizacją
+- ✅ Oznaczanie zadań jako wykonane / niewykonane
+- 📌 Geolokalizacja zadań i wyznaczanie najbliższego względem Twojej pozycji
+- 💬 Motywacyjne cytaty przy każdym dodaniu zadania
 - 🔍 Filtrowanie zadań:
   - 📆 według daty (z date pickerem + opcja czyszczenia filtra)
   - 🏠 według miejsca (radio buttony + opcja czyszczenia filtra)
-- ✅ Oznaczanie zadań jako wykonane / niewykonane
-- ➕ Dodawanie i usuwanie zadań z bazy danych Supabase
-- 📌 Geolokalizacja zadań i podsuwanie użytkownikowi najbliższego z nich, aby pobudzić aktywne planowanie, które znacznie zwiększa szanse na pomyślne ukończenie zadania
-- 💬 Motywacyjne cytaty podczas dodawania zadań
-- 📋 Widok szczegółów każdego zadania
+- 📋 Widok szczegółów każdego zadania (z opcją otwarcia lokalizacji w mapach)
+- 👤 Uwierzytelnianie użytkownika (logowanie, rejestracja, zmiana hasła)
+- 🔄 Subskrypcja zmian danych przez Supabase Channels w czasie rzeczywistym
+- 🔌 Obsługa offline: cache zadań w `AsyncStorage`, fallback działania bez internetu
 
 ---
 
-## 🚧 Technologia
+## 🧠 Architektura aplikacji
 
-- React Native + Expo  
-- Supabase jako backend (Auth + Database)  
-- AsyncStorage (obsługa odznaczania zadań offline)  
-- NetInfo (status połączenia)  
-- Ikonki: FontAwesome, MaterialIcons  
-- Stylizacja własna (StyleSheet)
-- Tooltip: react-native-walkthrough-tooltip
+- **Context API**  
+  - `AuthContext`: zarządza sesją, użytkownikiem i stanem zalogowania  
+  - `TasksContext`: centralna logika zadań (CRUD, subskrypcje, offline, filtrowanie)
+- **Rozdzielenie logiki od widoków**: komponenty są czyste, a cała logika zamknięta w contextach
+- **Responsywny layout**: layouty dopasowują się do szerokości ekranu
+
+---
+
+## 🧰 Technologie
+
+- 📱 React Native + Expo
+- 💽 Supabase jako backend (Auth + Database)
+- 💾 AsyncStorage (cache offline)
+- 🌍 Expo Location + Geocoding (adresy, lokalizacja)
+- 🌐 NetInfo (status połączenia)
+- 🎨 StyleSheet (własna stylizacja)
+- 🔤 Ikony: FontAwesome, MaterialIcons
+- 🧭 Nawigacja: Expo Router
+- 💡 Tooltip: react-native-walkthrough-tooltip
 
 ---
 

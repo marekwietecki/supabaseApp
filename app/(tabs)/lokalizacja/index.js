@@ -61,7 +61,6 @@ export default function LocationScreen() {
             nearest = { ...task, distance: dist };
             }
         }
-
         return nearest;
     };
 
@@ -98,8 +97,8 @@ export default function LocationScreen() {
             if (reverseGeocode && reverseGeocode.length > 0) {
                 setAddress(reverseGeocode[0]);
             }
-            } catch (err) {
-            setErrorMsg('Błąd lokalizacji:, ${err.message}');
+            } catch (err) { 
+                setErrorMsg(`Błąd geokodowania: ${error.message}`);
             } finally {
             setIsLoading(false);
         }
@@ -123,14 +122,14 @@ export default function LocationScreen() {
                 setLocation(newLocation);
                 const reverse = await Location.reverseGeocodeAsync(newLocation.coords);
                 if (reverse.length > 0) setAddress(reverse[0]);
-                const nearest = await findNearestTask(newLocation.coords);
+                const nearest = await findNearestTaskFromList(newLocation.coords);
                 console.log('Najbliższe zadanie:', nearest);
                 setNearestTask(nearest);
             } else {
                 setErrorMsg('Nie znaleziono podanego adresu');
             }
         } catch (error) {
-            setErrorMsg('Błąd, geocode: ${error.message}');
+            setErrorMsg(`Błąd lokalizacji: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -156,7 +155,6 @@ export default function LocationScreen() {
         }
     };
       
-
     useEffect(() => {
         requestLocation();
     }, []);

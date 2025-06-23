@@ -5,12 +5,11 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '../../../utils/colors'
 import { useAuth } from '../../../contexts/AuthContext';
 
-
-export default function App() {
-  const router = useRouter();
-
+export default function ProfileScreen() {
   const { user, signOut } = useAuth();
 
+  const router = useRouter();
+  
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Stack.Screen

@@ -1,5 +1,4 @@
-// contexts/TasksContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import supabase from '../lib/supabase-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
@@ -10,7 +9,6 @@ export const TasksProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [offlineQueue, setOfflineQueue] = useState([]);
 
-  // Funkcja pobierająca zadania dla danego użytkownika
   const fetchTasks = async (userId) => {
     try {
       const { data, error } = await supabase
@@ -41,7 +39,6 @@ export const TasksProvider = ({ children }) => {
         return null;
       }
 
-      // Możesz opcjonalnie dodać zadanie do globalnego state:
       setTasks((prev) => {
         const exists = prev.find((t) => t.id === data.id);
         if (!exists) return [...prev, data];
@@ -60,7 +57,6 @@ export const TasksProvider = ({ children }) => {
       const netState = await NetInfo.fetch();
 
       if (!netState.isConnected) {
-        // 🔌 Offline — aktualizuj stan lokalnie i dodaj do kolejki offline
         setTasks((prev) => {
           const updated = prev.map((task) =>
             task.id === id ? { ...task, is_done: !isDone } : task
@@ -74,7 +70,6 @@ export const TasksProvider = ({ children }) => {
         return;
       }
 
-      // 🌐 Online — wykonaj aktualizację w bazie
       const { error } = await supabase
         .from('tasks')
         .update({ is_done: !isDone })
@@ -97,7 +92,6 @@ export const TasksProvider = ({ children }) => {
     }
   };
 
-  // Funkcja do usuwania zadania
   const removeTaskHandler = async (id) => {
     try {
       const { error } = await supabase.from('tasks').delete().eq('id', id);
@@ -115,7 +109,6 @@ export const TasksProvider = ({ children }) => {
     }
   };
 
-  // Funkcja do dodawania zadania
   const addTask = async (newTask) => {
     try {
       const { data, error } = await supabase
@@ -135,7 +128,6 @@ export const TasksProvider = ({ children }) => {
     }
   };
 
-   // Funkcja dodająca wpis do kolejki offline
   const addToOfflineQueue = async (update) => {
     try {
       const storedQueue = await AsyncStorage.getItem('offline-queue');
@@ -161,9 +153,7 @@ export const TasksProvider = ({ children }) => {
     }
   };
 
-    // Możesz wywołać loadOfflineTasks() w useEffect, jeśli nie ma połączenia lub inna logika inicjalizacji
   useEffect(() => {
-    // Jeśli nie masz połączenia lub sesji, spróbuj załadować dane offline
     const init = async () => {
       const netState = await NetInfo.fetch();
       if (!netState.isConnected) {
@@ -173,7 +163,6 @@ export const TasksProvider = ({ children }) => {
     init();
   }, []);
 
-  // Funkcja synchronizująca offlineQueue
   const syncOfflineQueue = async () => {
     try {
       const storedQueue = await AsyncStorage.getItem('offline-queue');
@@ -193,13 +182,11 @@ export const TasksProvider = ({ children }) => {
       }
       setOfflineQueue([]);
       await AsyncStorage.removeItem('offline-queue');
-      // Opcjonalnie: odśwież zadania, jeśli masz informacje o użytkowniku
     } catch (e) {
       console.error('Błąd w syncOfflineQueue:', e);
     }
   };
 
-    // Monitorowanie połączenia – automatycznie synchronizuj, gdy urządzenie jest online
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isConnected) {
