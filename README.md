@@ -39,7 +39,6 @@ Mobilna aplikacja React Native do zarządzania zadaniami — z przyjemnym interf
 - 🎨 StyleSheet (własna stylizacja)
 - 🔤 Ikony: FontAwesome, MaterialIcons
 - 🧭 Nawigacja: Expo Router
-- 💡 Tooltip: react-native-walkthrough-tooltip
 
 ---
 
