@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import supabase from '../../lib/supabase-client';
+import { colors } from '../../utils/colors'
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -79,7 +80,7 @@ export default function Auth() {
         <TextInput
           style={[
             styles.textInput,
-            { borderColor: isOneFocused ? '#2196F3' : '#D8E0E2' },
+            { borderColor: isOneFocused ? colors.blue500 : colors.gray200},
           ]}
           label="Email"
           onChangeText={(text) => setEmail(text)}
@@ -95,7 +96,7 @@ export default function Auth() {
         <TextInput
           style={[
             styles.textInput,
-            { borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' },
+            { borderColor: isTwoFocused ? colors.blue500 : colors.gray200},
           ]}
           label="Password"
           onChangeText={(text) => setPassword(text)}
@@ -156,10 +157,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   buttonTextPrimary: {
-    color: 'white',
+    color: colors.gray000,
   },
   buttonContainerPrimary: {
-    backgroundColor: '#44B04B',
+    backgroundColor: colors.green500,
     borderRadius: 36,
     alignSelf: 'center',
   },
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 2,
     borderRadius: 24,
-    borderColor: 'gray',
+    borderColor: colors.gray400,
     maxWidth: 600,
     alignItems: 'center',
   },

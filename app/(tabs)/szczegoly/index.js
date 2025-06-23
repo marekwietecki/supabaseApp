@@ -13,6 +13,8 @@ import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
+import { colors } from '../../../utils/colors'
+
 
 export default function HomeScreen() {
   const [tasks, setTasks] = useState([]);
@@ -48,16 +50,12 @@ export default function HomeScreen() {
         }
       });
     } else {
-      // Jeśli offline, możesz pozostawić user z poprzedniego stanu lub wyświetlić komunikat,
-      // że dane użytkownika mogą być niedostępne, ale przynajmniej nie próbujesz ich pobierać.
       console.log('Offline – nie pobieram danych użytkownika');
     }
   }, [isOnline]);
 
   async function fetchTasks(userId) {
     if (!isOnline) {
-      // Jeśli offline, po prostu kończymy funkcję, nie wyświetlając błędu,
-      // bo użytkownik jest już informowany o braku sieci.
       console.log("Offline - pomijam pobieranie zadań");
       return;
     }
@@ -68,8 +66,6 @@ export default function HomeScreen() {
       .eq('creator_id', userId);
 
     if (error) {
-      // Możesz rozważyć inne sprawdzanie błędów,
-      // ale jeśli error wynika z braku sieci, być może warto go pominąć
       console.log('Błąd pobierania z BD:', error.message);
     } else {
       setTasks([...data]);
@@ -181,14 +177,14 @@ export default function HomeScreen() {
                         <MaterialIcons
                           name="info-outline"
                           size={24}
-                          color="#2196F3"
+                          color={colors.blue500}
                           style={{ marginBottom: 6 }}
                         />
                       </View>
                       <Text
                         style={[
                           styles.itemText,
-                          { color: item.is_done ? 'green' : 'red' }
+                          { color: item.is_done ? colors.green500 : colors.red500 }
                         ]}
                         numberOfLines={1}
                         ellipsizeMode="tail"
@@ -221,10 +217,10 @@ export default function HomeScreen() {
       </View>
       ) : (
             <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+              <Text style={{ color: colors.gray800, fontWeight: '800', fontSize: 16 }}>
                 🔌 Brak połączenia z internetem
               </Text>
-              <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+              <Text style={{ color: colors.gray800, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
                 Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
               </Text>
             </View>
@@ -236,7 +232,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -250,7 +246,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     paddingTop: 24,
     paddingLeft: '2%',
     paddingBottom: 8,
@@ -265,10 +261,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 0,
     overflow: 'visible',
-    backgroundColor: 'white', 
+    backgroundColor: colors.gray000, 
     borderRadius: 24, 
     elevation: 5, 
-    shadowColor: '#000', 
+    shadowColor: colors.gray800, 
     shadowOffset: { width: 0, height: 0 }, 
     shadowOpacity: 0.07,
     shadowRadius: 16, 
@@ -287,6 +283,6 @@ const styles = StyleSheet.create({
   itemTextSecondary: {
     fontSize: 14,
     paddingVertical: 2,
-    color: 'gray',
+    color: colors,gray200,
   },
 });

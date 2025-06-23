@@ -16,6 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
+import { colors } from '../../../utils/colors'
 
 export default function HomeScreen() {
   // Filtry i dane
@@ -30,7 +31,9 @@ export default function HomeScreen() {
   const [offlineQueue, setOfflineQueue] = useState([]);
 
   // Dynamiczna orientacja
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenWidth, setScreenWidth] = useState(
+    Dimensions.get('window').width,
+  );
   const dynamicPaddingTop = screenWidth > 914 ? '0%' : 0;
 
   useEffect(() => {
@@ -148,35 +151,32 @@ export default function HomeScreen() {
     }, [session]),
   );
 
-  // Funkcja zmieniająca status zadania (toggle is_done) i aktualizująca cache offline
- async function toggleDoneHandler(id, isDone) {
+  async function toggleDoneHandler(id, isDone) {
     const netState = await NetInfo.fetch();
 
     if (!netState.isConnected) {
-      setTasks(prev => {
-        const updatedTasks = prev.map(task =>
-          task.id === id ? { ...task, is_done: !isDone } : task
+      setTasks((prev) => {
+        const updatedTasks = prev.map((task) =>
+          task.id === id ? { ...task, is_done: !isDone } : task,
         );
         AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
         return updatedTasks;
       });
-      
+
       const newUpdate = { id, newValue: !isDone };
-      
-      // Używamy funkcjonlnej aktualizacji dla offlineQueue
-      setOfflineQueue(prevQueue => {
+
+      setOfflineQueue((prevQueue) => {
         const newQueue = [...prevQueue, newUpdate];
         AsyncStorage.setItem('offline-queue', JSON.stringify(newQueue));
         Alert.alert(
-          "Offline",
-          "Zmiana została zapisana lokalnie. Zostanie zsynchronizowana, gdy wróci internet."
+          'Offline',
+          'Zmiana została zapisana lokalnie. Zostanie zsynchronizowana, gdy wróci internet.',
         );
         return newQueue;
       });
       return;
     }
 
-    // Jeśli jest połączenie, próbujemy zaktualizować w Supabase
     const { error } = await supabase
       .from('tasks')
       .update({ is_done: !isDone })
@@ -185,17 +185,17 @@ export default function HomeScreen() {
     if (error) {
       Alert.alert('Błąd aktualizacji', error.message);
     } else {
-      setTasks(prev => {
-        const updatedTasks = prev.map(task =>
-          task.id === id ? { ...task, is_done: !isDone } : task
+      setTasks((prev) => {
+        const updatedTasks = prev.map((task) =>
+          task.id === id ? { ...task, is_done: !isDone } : task,
         );
         AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
         return updatedTasks;
       });
     }
   }
+
   async function syncOfflineQueue() {
-    // Spróbuj załadować offline queue z AsyncStorage, jeśli jest
     const storedQueue = await AsyncStorage.getItem('offline-queue');
     let updates = storedQueue ? JSON.parse(storedQueue) : offlineQueue;
 
@@ -203,30 +203,26 @@ export default function HomeScreen() {
 
     for (const update of updates) {
       const { id, newValue } = update;
-      // Próbujemy zaktualizować każdy task w Supabase
       const { error } = await supabase
         .from('tasks')
         .update({ is_done: newValue })
         .eq('id', id);
 
       if (error) {
-        console.log("Błąd synchronizacji dla tasku", id, ":", error.message);
-        // Możesz zdecydować się pozostawić tę zmianę w kolejce, żeby spróbować ponownie później.
+        console.log('Błąd synchronizacji dla tasku', id, ':', error.message);
       }
     }
 
-    // Po synchronizacji, wyczyść kolejkę
     setOfflineQueue([]);
     await AsyncStorage.removeItem('offline-queue');
 
-    // Opcjonalnie odśwież listę zadań z serwera
     if (session && session.user) {
       fetchTasks(session.user.id);
     }
   }
 
   useEffect(() => {
-    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
+    const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
       if (state.isConnected) {
         syncOfflineQueue();
       }
@@ -235,8 +231,6 @@ export default function HomeScreen() {
     return () => unsubscribeNetInfo();
   }, [offlineQueue, session]);
 
-
-  // Funkcja usuwająca zadanie i aktualizująca cache offline
   async function removeTaskHandler(id) {
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
@@ -278,8 +272,10 @@ export default function HomeScreen() {
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
         <View style={styles.wrapper}>
           <View style={styles.filterRow}>
-            <View style={styles.filterResult}>  
-              <Text style={styles.h2}>{dateFilter ? "Data: " + dateFilterLabel : "Wybierz datę"}</Text>
+            <View style={styles.filterResult}>
+              <Text style={styles.h2}>
+                {dateFilter ? dateFilterLabel : 'Wybierz datę'}
+              </Text>
               {dateFilter && (
                 <TouchableOpacity
                   onPress={() => {
@@ -287,7 +283,10 @@ export default function HomeScreen() {
                     setDateFilterLabel('Wybierz datę');
                   }}
                 >
-                  <FontAwesome name="times-circle-o" style={styles.clearFilter} />
+                  <FontAwesome
+                    name="times-circle-o"
+                    style={styles.clearFilter}
+                  />
                 </TouchableOpacity>
               )}
             </View>
@@ -295,7 +294,7 @@ export default function HomeScreen() {
               style={styles.filterIcon}
               onPress={() => setShowDatePicker(true)}
             >
-              <MaterialIcons name="date-range" size={24} color="#444444" />
+              <MaterialIcons name="date-range" size={24} color={colors.gray800} />
             </TouchableOpacity>
           </View>
 
@@ -308,104 +307,144 @@ export default function HomeScreen() {
                 setShowDatePicker(false);
                 if (selectedDate) {
                   setDateFilter(selectedDate);
-                  setDateFilterLabel(selectedDate.toLocaleDateString('pl-PL').replace(/\./g, '/'));
+                  setDateFilterLabel(
+                    selectedDate
+                      .toLocaleDateString('pl-PL')
+                      .replace(/\./g, '/'),
+                  );
                 }
               }}
             />
           )}
 
           <View style={styles.filterRow}>
-            <View style={styles.filterResult}>  
-              <Text style={styles.h2}>{placeFilter ? "Miejsce: " + placeFilter : 'Wybierz miejsce'}</Text>
+            <View style={[styles.filterResult, {flex: 1, justifyContent: 'space-between'}]}>
+              <Text
+                style={styles.h2}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {placeFilter ? placeFilter : 'Wybierz miejsce'}
+              </Text>
               {placeFilter && (
-                <TouchableOpacity
-                  onPress={() => setPlaceFilter('')}
-                >
-                  <FontAwesome name="times-circle-o" style={styles.clearFilter} />
+                <TouchableOpacity onPress={() => setPlaceFilter('')}>
+                  <FontAwesome
+                    name="times-circle-o"
+                    style={styles.clearFilter}
+                  />
                 </TouchableOpacity>
               )}
             </View>
             <TouchableOpacity
-              style={filterVisible ? styles.activeFilterIcon : styles.filterIcon}
+              style={
+                filterVisible ? styles.activeFilterIcon : styles.filterIcon
+              }
               onPress={() => setFilterVisible(!filterVisible)}
             >
-              <MaterialIcons name="filter-list" size={24} color={filterVisible ? "#1C73B4" : "#444444"} />
+              <MaterialIcons
+                name="place"
+                size={24}
+                color={filterVisible ? colors.blue700 : colors.gray800}
+              />
             </TouchableOpacity>
-              </View>
-              {filterVisible && (
-                <View style={styles.filterBox}>
-                  {uniquePlaces.map((place, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={styles.filterButton}
-                      onPress={() => setPlaceFilter(place)}
+          </View>
+          {filterVisible && (
+            <View style={styles.filterBox}>
+              {uniquePlaces.map((place, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.filterButton}
+                  onPress={() => setPlaceFilter(place)}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginLeft: 6,
+                    }}
+                  >
+                    <MaterialIcons
+                      name={
+                        placeFilter === place
+                          ? 'radio-button-checked'
+                          : 'radio-button-unchecked'
+                      }
+                      size={20}
+                      color={placeFilter === place ? colors.blue700 : colors.gray800}
+                    />
+                    <Text
+                      style={[
+                        styles.filterText,
+                        placeFilter === place && styles.activeFilterText,
+                      ]}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 6, }}>
-                        <MaterialIcons
-                          name={placeFilter === place ? "radio-button-checked" : "radio-button-unchecked"}
-                          size={20}
-                          color={placeFilter === place ? "#1C73B4" : "#444444"}
-                        />
-                        <Text
-                          style={[
-                            styles.filterText,
-                            placeFilter === place && styles.activeFilterText,
-                          ]}
-                        >
-                          {place}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
+                      {place}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
           {filteredTasks.length === 0 ? (
             <View style={{ paddingTop: 20, alignItems: 'center' }}>
-              <Text style={{ color: 'black', fontSize: 18, textAlign: 'center', fontWeight: '800', }}>
-                 {isFiltered ? 'Nie masz żadnych zadań dla tych filtrów.\nZmodyfikuj je, aby otrzymać listę zadań.' : 'Nie masz jeszcze żadnych zadań.\nDodaj zadania i wróc do listy.'}
+              <Text
+                style={{
+                  color: colors.gray800,
+                  fontSize: 18,
+                  textAlign: 'center',
+                  fontWeight: '800',
+                }}
+              >
+                {isFiltered
+                  ? 'Nie masz żadnych zadań dla tych filtrów. Zmodyfikuj je, aby otrzymać listę zadań.'
+                  : 'Nie masz jeszcze żadnych zadań. Dodaj zadania i wróc do listy.'}
               </Text>
             </View>
-          ) : (  
+          ) : (
             <SectionList
               sections={[{ title: 'Lista Zadań', data: filteredTasks }]}
               keyExtractor={(item) => item.id.toString()}
-              style={{ backgroundColor: '#E6ECF0', flex: 1, borderRadius: 28, paddingHorizontal: 12,  marginTop: 4, elevation: 2 }}
-              contentContainerStyle={{ gap:12, paddingVertical: 4,}}
+              style={{
+                backgroundColor: colors.blue100,
+                flex: 1,
+                borderRadius: 28,
+                paddingHorizontal: 12,
+                marginTop: 4,
+                elevation: 2,
+              }}
+              contentContainerStyle={{ gap: 12, paddingVertical: 4 }}
               ListEmptyComponent={
                 <View style={{ paddingVertical: 0, alignItems: 'flex-start' }}>
-                  <Text style={{ color: 'gray', fontSize: 16, textAlign: 'center' }}>
+                  <Text
+                    style={{ color: 'gray', fontSize: 16, textAlign: 'center' }}
+                  >
                     📭 {nothingToShow}
                   </Text>
                 </View>
               }
               renderItem={({ item }) => (
-                <View style={ item.is_done ? styles.itemDone : styles.item}>
+                <View style={item.is_done ? styles.itemDone : styles.item}>
                   <TouchableOpacity
-                    onPress={() =>
-                      toggleDoneHandler(item.id, item.is_done)
-                    }
+                    onPress={() => toggleDoneHandler(item.id, item.is_done)}
                     style={styles.itemRow}
                   >
                     {item.is_done ? (
                       <FontAwesome
                         name="check-square"
                         size={24}
-                        color="green"
+                        color={colors.green500}
                         style={styles.itemIcon}
                       />
                     ) : (
                       <FontAwesome
                         name="square-o"
                         size={24}
-                        color="gray"
+                        color={colors.gray600}
                         style={styles.itemIcon}
                       />
                     )}
                     <Text
-                      style={[
-                        styles.itemText,
-                        item.is_done && styles.done,
-                      ]}
+                      style={[styles.itemText, item.is_done && styles.done]}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -422,19 +461,22 @@ export default function HomeScreen() {
                     }}
                   >
                     <Link href={`/(tabs)/szczegoly/${item.id}`} asChild>
-                      <TouchableOpacity
-                      >
+                      <TouchableOpacity>
                         <MaterialIcons
                           name="info-outline"
                           size={22}
-                          color={ item.is_done ? '#45FAFF' : "#2196F3"}
+                          color={item.is_done ? colors.blue300 : colors.blue500}
                         />
                       </TouchableOpacity>
                     </Link>
                     <TouchableOpacity
                       onPress={() => removeTaskHandler(item.id)}
                     >
-                      <MaterialIcons name="delete" size={24} color={item.is_done ? 'pink' : 'red'}/>
+                      <MaterialIcons
+                        name="delete"
+                        size={24}
+                        color={item.is_done ? colors.red300 : colors.red500}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -452,7 +494,7 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     paddingHorizontal: '2%',
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     width: '100%',
     maxWidth: 600,
     paddingVertical: '4%',
@@ -467,14 +509,16 @@ const styles = StyleSheet.create({
   },
   h2: {
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 2,
     marginLeft: '3%',
-    color: '#666',
+    color: colors.gray800,
+    flexShrink: 1, 
+    justifyContent: 'flex-start'
   },
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     paddingHorizontal: '4%',
     alignItems: 'center',
   },
@@ -496,14 +540,14 @@ const styles = StyleSheet.create({
     marginRight: 6,
     paddingBottom: 8,
     padding: 10,
-    color: '#1C73B4',
+    color: colors.blue700,
   },
   filterBox: {
     padding: 8,
     borderRadius: 16,
     marginVertical: 12,
     borderWidth: 3,
-    borderColor: '#1C73B4',
+    borderColor: colors.blue700,
   },
   filterButton: {
     paddingVertical: 10,
@@ -511,18 +555,18 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 16,
     paddingLeft: 8,
-    color: 'gray',
+    color: colors.gray600,
     fontWeight: '500',
   },
   activeFilterText: {
-    color: '#222',
+    color: colors.gray800,
     fontWeight: '800',
     fontSize: 18,
   },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     paddingTop: 24,
     paddingLeft: '2%',
     paddingBottom: 8,
@@ -530,38 +574,38 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingLeft: 12,
-    paddingRight: 8,
+    paddingVertical: 16,
+    paddingLeft: 16,
+    paddingRight: 12,
     alignItems: 'center',
-    backgroundColor: 'white',
-    elevation: 2, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 0 }, 
+    backgroundColor: colors.gray000,
+    elevation: 2,
+    shadowColor: colors.gray800,
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.07,
-    shadowRadius: 16, 
+    shadowRadius: 16,
     borderRadius: 24,
   },
   itemDone: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingLeft: 12,
-    paddingRight: 8,
+    paddingVertical: 16,
+    paddingLeft: 16,
+    paddingRight: 12,
     alignItems: 'center',
-    backgroundColor: 'white',
-    elevation: 1, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 0 }, 
+    backgroundColor: colors.gray000,
+    elevation: 1,
+    shadowColor: colors.gray800,
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.07,
-    shadowRadius: 16, 
+    shadowRadius: 16,
     borderRadius: 24,
     opacity: 40,
   },
   itemText: {
-    fontSize: 20,
-    color: '#555555',
-    paddingBottom: 3,
+    fontSize: 16,
+    color: colors.gray600,
+    paddingBottom: 2,
     flex: 1,
     flexShrink: 1,
     paddingRight: 0,
@@ -582,18 +626,18 @@ const styles = StyleSheet.create({
   },
   done: {
     textDecorationLine: 'line-through',
-    color: '#BBBBBB',
+    color: colors.gray400,
   },
   clearFilter: {
     fontSize: 22,
     padding: 1,
     marginTop: 2,
-    marginLeft:4,
-    color: '#666'
+    marginLeft: 4,
+    color: colors.gray600,
   },
   filterResult: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
 });

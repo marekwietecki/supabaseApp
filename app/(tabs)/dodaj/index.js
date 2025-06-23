@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo'
 import * as Location from 'expo-location';
+import { colors } from '../../../utils/colors'
+
 
 export default function App() {
   const [taskName, setTaskName] = useState('');
@@ -139,12 +141,12 @@ export default function App() {
         <View style={[styles.wrapper, { paddingTop: dynamicPaddingTop }, {justifyContent: dynamicJustify}]}>
           <TextInput
             placeholder="🎯  Nazwa zadania"
-            placeholderTextColor="gray"
+            placeholderTextColor={colors.gray400}
             value={taskName}
             onChangeText={setTaskName}
             style={[
               styles.input,
-              { borderColor: isOneFocused ? '#2196F3' : '#D8E0E2' },
+              { borderColor: isOneFocused ? colors.blue500 : colors.gray200 },
             ]}
             autoCapitalize="none"
             onFocus={() => setOneFocused(true)}
@@ -154,7 +156,7 @@ export default function App() {
             onPress={() => setShowDatePicker(true)}
             style={[
               styles.input,
-              { borderColor: isTwoFocused ? '#2196F3' : '#D8E0E2' },
+              { borderColor: isTwoFocused ? colors.blue500 : colors.gray200 },
             ]}
             onPressIn={() => {
               setTwoFocused(true);
@@ -163,7 +165,7 @@ export default function App() {
             }}
             onPressOut={() => setTwoFocused(false)}
           >
-            <Text style={{ color: taskDate ? 'black' : 'gray', fontSize: 16 }}>
+            <Text style={{ color: taskDate ? colors.gray800 : colors.gray400, fontSize: 16 }}>
               {taskDate 
                 ? taskDate.toLocaleDateString('pl-PL').replace(/\./g, '/')
                 : '📆  Wybierz datę'}
@@ -184,12 +186,12 @@ export default function App() {
           )}
           <TextInput
             placeholder="📌  Adres Zadania"
-            placeholderTextColor="gray"
+            placeholderTextColor= {colors.gray400}
             value={taskPlace}
             onChangeText={setTaskPlace}
             style={[
               styles.input,
-              { borderColor: isThreeFocused ? '#2196F3' : '#D8E0E2' },
+              { borderColor: isThreeFocused ? colors.blue500 : colors.gray200 },
             ]}
             autoCapitalize="none"
             onFocus={() => setThreeFocused(true)}
@@ -212,10 +214,10 @@ export default function App() {
       </View>
       ) : (
         <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-          <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+          <Text style={{ color: colors.gray800, fontWeight: '800', fontSize: 16 }}>
             🔌 Brak połączenia z internetem
           </Text>
-          <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+          <Text style={{ color: colors.gray800, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
             Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
           </Text>
         </View>
@@ -227,7 +229,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     paddingHorizontal: '4%',
     alignItems: 'center',
   },
@@ -235,34 +237,25 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: '3%',
     paddingVertical: '6%',
-    backgroundColor: 'white',
+    backgroundColor: colors.gray000,
     width: '100%',
     heigth: '100%',
     maxWidth: 600,
-  },
-  h2: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    marginLeft: '2%',
-    color: '#666',
-    alignSelf: 'left',
-    paddingLeft: 12,
   },
   input: {
     borderWidth: 2,
     padding: 16,
     marginVertical: 6,
     borderRadius: 24,
-    color: 'black',
+    color: colors.gray800,
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
   },
   button: {
     borderRadius: 36,
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 38,
+    backgroundColor: colors.blue500,
+    paddingHorizontal: 24,
     paddingVertical: 14,
     marginTop: 12,
     alignItems: 'center',
@@ -270,12 +263,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 700,
+    color: colors.gray000,
+    fontSize: 16,
+    fontWeight: '700',
   },
   error: {
-    color: 'red',
+    color: colors.red500,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,
@@ -286,7 +279,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     textAlign: 'center',
     marginTop: '40%',
-    color: '#555',
+    color: colors.gray400,
     paddingHorizontal: 20,
   },
 });

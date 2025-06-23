@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { colors } from '../../utils/colors'
 
 export default function TabsLayout() {
   return (
@@ -7,8 +8,10 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          borderTopWidth: 2, // usuwa cienką linię domyślną
+          borderTopWidth: 2, 
         },
+        tabBarActiveTintColor: colors.blue500, 
+        tabBarInactiveTintColor: colors.gray400,
       }}
     >
       <Tabs.Screen
@@ -16,11 +19,11 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Lista',
           title: 'lista',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <FontAwesome
-              size={24}
+              size={focused ? 24 : 20}
               style={{ marginBottom: -3 }}
-              name="list"
+              name="list-ul"
               color={color}
             />
           ),
@@ -31,9 +34,9 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Lokalizacja',
           title: 'lokalizacja',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <FontAwesome
-              size={24}
+              size={focused ? 24 : 20} 
               style={{ marginBottom: -3 }}
               name="map-pin"
               color={color}
@@ -46,9 +49,9 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Dodaj',
           title: 'Dodaj',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <FontAwesome
-              size={24}
+              size={focused ? 24 : 20} 
               style={{ marginBottom: -3 }}
               name="plus"
               color={color}
@@ -61,11 +64,11 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Szczegóły',
           title: 'Szczegóły',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <FontAwesome
-              size={24}
+              size={focused ? 24 : 20} 
               style={{ marginBottom: -3 }}
-              name="info-circle"
+              name="eye"
               color={color}
             />
           ),
@@ -76,11 +79,11 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Profil',
           title: 'Profil',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <FontAwesome
-              size={24}
+              size={focused ? 24 : 20} 
               style={{ marginBottom: -3 }}
-              name="male"
+              name="user"
               color={color}
             />
           ),

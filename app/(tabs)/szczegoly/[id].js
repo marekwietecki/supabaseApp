@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform, Linking } from 'react-native';
-
+import { colors } from '../../../utils/colors'
 
 export default function TaskDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -46,9 +46,10 @@ export default function TaskDetailsScreen() {
     });
   }, [navigation]);
 
-{/*
+
   useEffect(() => {
     navigation.setOptions({
+      headerTitle: '',
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => {
@@ -57,17 +58,17 @@ export default function TaskDetailsScreen() {
           style={styles.headerButton}
         >
           <FontAwesome
-            size={20}
+            size={18}
             style={{ marginBottom: 0 }}
             name="chevron-left"
-            color={'#2196F3'}
+            color={colors.blue500}
           />
           <Text
             style={{
-              color: '#2196F3',
-              fontSize: 20,
+              color: colors.blue500,
+              fontSize: 18,
               fontWeight: '600',
-              paddingBottom: 4,
+              paddingBottom: 2,
             }}
           >
             Szczegóły
@@ -76,7 +77,7 @@ export default function TaskDetailsScreen() {
       ),
     });
   }, [navigation, router]);
-*/}
+
 
   useEffect(() => {
     console.log('Otrzymane id z URL:', id);
@@ -111,16 +112,16 @@ export default function TaskDetailsScreen() {
         <View style={styles.wrapper}>
           {isOnline ? (
             <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1, paddingLeft: '-6%', paddingTop: '-8%', }}>
-              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+              <Text style={{ color: colors.gray800, fontWeight: '800', fontSize: 16 }}>
                 Ładowanie danych...            
               </Text>
             </View> 
           ) : (
             <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center', flex: 1, paddingLeft: '-6%', paddingTop: '-8%', }}>
-              <Text style={{ color: 'black', fontWeight: '800', fontSize: 16 }}>
+              <Text style={{ color: colors.gray800, fontWeight: '800', fontSize: 16 }}>
                 🔌 Brak połączenia z internetem
               </Text>
-              <Text style={{ color: 'black', fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+              <Text style={{ color: colors.gray800, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
                 Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
               </Text>
             </View>
@@ -133,7 +134,7 @@ export default function TaskDetailsScreen() {
   return (
     <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
       <Text style={styles.title}>{task.name}</Text>
-      <Text style={[styles.subtitle,{ color: task.is_done ? 'green' : 'red' }]} numberOfLines={1} ellipsizeMode="tail">{task.is_done ? 'Wykonane' : 'Nie wykonane'}</Text>
+      <Text style={[styles.subtitle,{ color: task.is_done ? colors.green500 : colors.red500 }]} numberOfLines={1} ellipsizeMode="tail">{task.is_done ? 'Wykonane' : 'Nie wykonane'}</Text>
       <Text style={styles.subtitle}>
         Termin zadania: {new Date(task.date).toLocaleDateString('pl-PL').replace(/\./g, '/')}
       </Text>
@@ -144,10 +145,10 @@ export default function TaskDetailsScreen() {
           onPress={() => {
             const lat = task.latitude;
             const lon = task.longitude;
-            const label = encodeURIComponent(task.place || 'Zadanie');
+            const label = encodeURIComponent(task.place);
             const url = Platform.select({
-              ios: `http://maps.apple.com/?ll=${lat},${lon}&q=${label}`,
-              android: `geo:${lat},${lon}?q=${lat},${lon}(${label})`,
+              ios: 'http://maps.apple.com/?ll=${lat},${lon}&q=${label}',
+              android: 'geo:${lat},${lon}?q=${lat},${lon}(${label})',
             });
             Linking.openURL(url);
           }}
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   },
   subtitleSecondary: {
     fontSize: 16,
-    color: 'gray',
+    color: colors.gray200,
     paddingTop: 8,
   },
   secondariesBox: {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     fontWeight: 700,
-    color: '#2196F3',
+    color: colors.blue500,
   },
   button: {
     flexDirection: 'row',
@@ -219,19 +220,19 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerButtonText: {
-    color: '#2196F3',
+    color: colors.blue500,
     fontSize: 16,
     fontWeight: 500,
   },
   mapButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: colors.blue500,
     padding: 10,
     marginTop: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   mapButtonText: {
-    color: 'white',
+    color: colors.gray000,
     fontSize: 16,
     fontWeight: '500',
   },
