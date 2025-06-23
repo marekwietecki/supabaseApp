@@ -5,23 +5,47 @@ import {
   useNavigation,
   useRouter,
 } from 'expo-router';
-import supabase from '../../../lib/supabase-client';
 import { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform, Linking } from 'react-native';
-import { colors } from '../../../utils/colors'
+import { colors } from '../../../utils/colors';
+import { useTasks } from '../../../contexts/TasksContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
-export default function TaskDetailsScreen() {
+export default function TaskDetailsIDScreen() {
+  const { getTaskById, fetchTaskById, loadOfflineTasks } = useTasks();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
-  const [task, setTask] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [task, setTask] = useState(getTaskById(id));
+
+  useEffect(() => {
+    const loadTask = async () => {
+      let localTask = getTaskById(id);
+
+      if (localTask) {
+        setTask(localTask);
+      } else {
+        await loadOfflineTasks(); 
+
+        localTask = getTaskById(id); 
+        if (localTask) {
+          setTask(localTask);
+        } else {
+          const fetched = await fetchTaskById(id); 
+          if (fetched) setTask(fetched);
+        }
+      }
+    };
+
+    if (id) loadTask();
+  }, [id]);
 
   const screenWidth = Dimensions.get('window').width;
   const dynamicPaddingTop = screenWidth > 600 ? 0 : '8%';
-
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -29,23 +53,12 @@ export default function TaskDetailsScreen() {
     });
     return () => unsubscribe();
   }, []);
-  const [user, setUser] = useState(null);
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user);
-      } else {
-        Alert.alert('Error accessing User data');
-      }
-    });
-  }, []);
 
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => null,
     });
   }, [navigation]);
-
 
   useEffect(() => {
     navigation.setOptions({
@@ -78,34 +91,6 @@ export default function TaskDetailsScreen() {
     });
   }, [navigation, router]);
 
-
-  useEffect(() => {
-    console.log('Otrzymane id z URL:', id);
-    console.log('Pobieram zadanie o id:', id);
-
-    async function fetchTaskDetails() {
-      try {
-        const { data, error } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error) {
-          console.error('Błąd pobierania zadania:', error);
-        } else {
-          console.log('Pobrane dane zadania:', data);
-          setTask(data);
-        }
-      } catch (err) {
-        console.error('Wyjątek w fetchTaskDetails:', err);
-      }
-    }
-
-    if (id) fetchTaskDetails();
-  }, [id]);
-
-  // Jeśli task jeszcze nie został pobrany:
   if (!task) {
     return (
       <View style={[styles.container, { paddingTop: dynamicPaddingTop }]}>
@@ -141,19 +126,19 @@ export default function TaskDetailsScreen() {
       <Text style={styles.subtitle}>Adres zadania: {task.place}</Text>
       {task.latitude && task.longitude && (
         <TouchableOpacity
-          style={[styles.mapButton, { marginBottom: 16 }]}
+          style={[styles.button, { marginBottom: 16 }]}
           onPress={() => {
             const lat = task.latitude;
             const lon = task.longitude;
             const label = encodeURIComponent(task.place);
             const url = Platform.select({
-              ios: 'http://maps.apple.com/?ll=${lat},${lon}&q=${label}',
-              android: 'geo:${lat},${lon}?q=${lat},${lon}(${label})',
+              ios: `http://maps.apple.com/?ll=${lat},${lon}&q=${label}`,
+              android: `geo:${lat},${lon}?q=${lat},${lon}(${label})`,
             });
             Linking.openURL(url);
           }}
         >
-          <Text style={styles.mapButtonText}>📍 Otwórz w mapach</Text>
+          <Text style={styles.buttonText}> Otwórz w mapach</Text>
         </TouchableOpacity>
       )}
       <View style={styles.secondariesBox}>  
@@ -167,7 +152,7 @@ export default function TaskDetailsScreen() {
       </View>
       <Link href={`/(tabs)/lista`} asChild>
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Przejdź do Listy Zadań</Text>
+          <Text style={styles.buttonText}> Przejdź do Listy Zadań</Text>
         </TouchableOpacity>
       </Link>
     </View>
@@ -193,7 +178,7 @@ const styles = StyleSheet.create({
   },
   subtitleSecondary: {
     fontSize: 16,
-    color: colors.gray200,
+    color: colors.gray400,
     paddingTop: 8,
   },
   secondariesBox: {

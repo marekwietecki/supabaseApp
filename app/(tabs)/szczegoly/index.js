@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,30 +6,26 @@ import {
   SectionList,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { Link, Stack } from 'expo-router';
 import supabase from '../../../lib/supabase-client';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
-import { colors } from '../../../utils/colors'
+import { colors } from '../../../utils/colors';
+import { useTasks } from '../../../contexts/TasksContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
-
-export default function HomeScreen() {
-  const [tasks, setTasks] = useState([]);
-  const [session, setSession] = useState(null);
-  const [user, setUser] = useState(null);
+export default function TaskDetailsScreen() {
+  const { tasks, fetchTasks } = useTasks();
+  const { user } = useAuth(); // ⬅️ tylko user z contextu
   const [isOnline, setIsOnline] = useState(true);
-
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const dynamicPaddingTop = screenWidth > 914 ? '2%' : 0;
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
-        setScreenWidth(window.width);
-      });
-    
+      setScreenWidth(window.width);
+    });
     return () => subscription.remove();
   }, []);
 
@@ -41,69 +37,8 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (isOnline) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          setUser(user);
-        } else {
-          console.log('Error accessing User data');
-        }
-      });
-    } else {
-      console.log('Offline – nie pobieram danych użytkownika');
-    }
-  }, [isOnline]);
-
-  async function fetchTasks(userId) {
-    if (!isOnline) {
-      console.log("Offline - pomijam pobieranie zadań");
-      return;
-    }
-    
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('creator_id', userId);
-
-    if (error) {
-      console.log('Błąd pobierania z BD:', error.message);
-    } else {
-      setTasks([...data]);
-    }
-  }
-
-  useEffect(() => {
-    let lastAlertTime = 0;
-
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session?.user) {
-          console.log('🔴 Wylogowany, próbuję pokazać alert...');
-
-          const now = Date.now();
-          if (now - lastAlertTime > 600000) {
-            Alert.alert('Uwaga', 'Nie jesteś zalogowany.');
-            lastAlertTime = now;
-          }
-        } else {
-          console.log('✅ Sesja aktywna:', session.user);
-          setSession(session);
-          fetchTasks(session.user.id);
-        }
-      },
-    );
-
-    return () => {
-      console.log('🧹 Czyszczę listener sesji...');
-      if (subscription?.subscription) {
-        subscription.subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchTasks(session.user.id);
+    if (user) {
+      fetchTasks(user.id);
 
       const channel = supabase
         .channel('tasks_changes')
@@ -112,7 +47,7 @@ export default function HomeScreen() {
           { event: '*', schema: 'public', table: 'tasks' },
           (payload) => {
             console.log('2 Zmiana w taskach wykryta:', payload);
-            fetchTasks(session.user.id);
+            fetchTasks(user.id);
           },
         )
         .subscribe();
@@ -121,16 +56,7 @@ export default function HomeScreen() {
         supabase.removeChannel(channel);
       };
     }
-  }, [session]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (session?.user) {
-        fetchTasks(session.user.id);
-      }
-      return () => {};
-    }, [session]),
-  );
+  });
 
   const sortedTasks = [...tasks].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -283,6 +209,6 @@ const styles = StyleSheet.create({
   itemTextSecondary: {
     fontSize: 14,
     paddingVertical: 2,
-    color: colors,gray200,
+    color: colors.gray200,
   },
 });

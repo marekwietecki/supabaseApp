@@ -15,22 +15,20 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
 import { colors } from '../../../utils/colors'
+import { useTasks } from '../../../contexts/TasksContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function HomeScreen() {
-  // Filtry i dane
+  const { tasks, fetchTasks, toggleDoneHandler, removeTaskHandler, setTasks } = useTasks();
+  const { session, user } = useAuth();
+
   const [placeFilter, setPlaceFilter] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const [session, setSession] = useState(null);
-  const [user, setUser] = useState(null);
   const [dateFilter, setDateFilter] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateFilterLabel, setDateFilterLabel] = useState('Wybierz datę');
-  const [offlineQueue, setOfflineQueue] = useState([]);
 
-  // Dynamiczna orientacja
   const [screenWidth, setScreenWidth] = useState(
     Dimensions.get('window').width,
   );
@@ -44,86 +42,9 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user);
-      } else {
-        Alert.alert('Error accessing User data');
-      }
-    });
-  }, []);
-
-  // 1. Funkcja ładowania danych offline z AsyncStorage – wywołujemy, gdy nie ma sesji
-  async function loadOfflineTasks() {
-    try {
-      const json = await AsyncStorage.getItem('local-tasks');
-      if (json !== null) {
-        const localData = JSON.parse(json);
-        setTasks(localData);
-        console.log('📦 Zadania załadowane lokalnie (offline)');
-      }
-    } catch (e) {
-      console.log('❌ Błąd ładowania z AsyncStorage', e);
-    }
-  }
-
-  // 2. Funkcja pobierania zadań z Supabase oraz zapisywania ich lokalnie
-  async function fetchTasks(userId) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('creator_id', userId);
-
-    if (error) {
-      console.log('Błąd Pobierania z BD', error.message);
-    } else {
-      setTasks([...data]);
-      // Zapisz pobrane dane do AsyncStorage jako lokalny cache
-      await AsyncStorage.setItem('local-tasks', JSON.stringify(data));
-      console.log('📝 Zadania zapisane lokalnie');
-    }
-  }
-
-  // Przy starcie, jeśli brak sesji – spróbuj załadować dane offline
-  useEffect(() => {
-    if (!session?.user) {
-      loadOfflineTasks();
-    }
-  }, []);
-
-  useEffect(() => {
-    let lastAlertTime = 0;
-
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session?.user) {
-          console.log('🔴 Wylogowany, próbuję pokazać alert...');
-          const now = Date.now();
-          if (now - lastAlertTime > 600000) {
-            Alert.alert('Uwaga', 'Nie jesteś zalogowany.');
-            lastAlertTime = now;
-          }
-        } else {
-          console.log('✅ Sesja aktywna:', session.user);
-          setSession(session);
-          fetchTasks(session.user.id);
-        }
-      },
-    );
-
-    return () => {
-      console.log('🧹 Czyszczę listener sesji...');
-      if (subscription?.subscription) {
-        subscription.subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     if (session?.user) {
       fetchTasks(session.user.id);
 
-      // Subskrypcja zmian w tabeli 'tasks'
       const channel = supabase
         .channel('tasks_changes')
         .on(
@@ -150,99 +71,6 @@ export default function HomeScreen() {
       return () => {};
     }, [session]),
   );
-
-  async function toggleDoneHandler(id, isDone) {
-    const netState = await NetInfo.fetch();
-
-    if (!netState.isConnected) {
-      setTasks((prev) => {
-        const updatedTasks = prev.map((task) =>
-          task.id === id ? { ...task, is_done: !isDone } : task,
-        );
-        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
-        return updatedTasks;
-      });
-
-      const newUpdate = { id, newValue: !isDone };
-
-      setOfflineQueue((prevQueue) => {
-        const newQueue = [...prevQueue, newUpdate];
-        AsyncStorage.setItem('offline-queue', JSON.stringify(newQueue));
-        Alert.alert(
-          'Offline',
-          'Zmiana została zapisana lokalnie. Zostanie zsynchronizowana, gdy wróci internet.',
-        );
-        return newQueue;
-      });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('tasks')
-      .update({ is_done: !isDone })
-      .eq('id', id);
-
-    if (error) {
-      Alert.alert('Błąd aktualizacji', error.message);
-    } else {
-      setTasks((prev) => {
-        const updatedTasks = prev.map((task) =>
-          task.id === id ? { ...task, is_done: !isDone } : task,
-        );
-        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
-        return updatedTasks;
-      });
-    }
-  }
-
-  async function syncOfflineQueue() {
-    const storedQueue = await AsyncStorage.getItem('offline-queue');
-    let updates = storedQueue ? JSON.parse(storedQueue) : offlineQueue;
-
-    if (updates.length === 0) return;
-
-    for (const update of updates) {
-      const { id, newValue } = update;
-      const { error } = await supabase
-        .from('tasks')
-        .update({ is_done: newValue })
-        .eq('id', id);
-
-      if (error) {
-        console.log('Błąd synchronizacji dla tasku', id, ':', error.message);
-      }
-    }
-
-    setOfflineQueue([]);
-    await AsyncStorage.removeItem('offline-queue');
-
-    if (session && session.user) {
-      fetchTasks(session.user.id);
-    }
-  }
-
-  useEffect(() => {
-    const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
-      if (state.isConnected) {
-        syncOfflineQueue();
-      }
-    });
-
-    return () => unsubscribeNetInfo();
-  }, [offlineQueue, session]);
-
-  async function removeTaskHandler(id) {
-    const { error } = await supabase.from('tasks').delete().eq('id', id);
-    if (error) {
-      Alert.alert('Błąd Usuwania', error.message);
-    } else {
-      setTasks((prev) => {
-        const updatedTasks = prev.filter((task) => task.id !== id);
-        AsyncStorage.setItem('local-tasks', JSON.stringify(updatedTasks));
-        return updatedTasks;
-      });
-    }
-  }
 
   const uniquePlaces = [...new Set(tasks.map((p) => p.place))];
 

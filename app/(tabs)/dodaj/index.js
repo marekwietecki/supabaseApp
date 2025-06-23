@@ -14,10 +14,15 @@ import {
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo'
 import * as Location from 'expo-location';
-import { colors } from '../../../utils/colors'
+import { colors } from '../../../utils/colors';
+import { useTasks } from '../../../contexts/TasksContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 
 export default function App() {
+  const { addTask } = useTasks(); 
+  const { user } = useAuth();
+
   const [taskName, setTaskName] = useState('');
   const [taskDate, setTaskDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -83,11 +88,7 @@ export default function App() {
 
     Keyboard.dismiss();
 
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-    if (sessionError || !session?.user) {
+    if (!user) {
       Alert.alert('Błąd', 'Nie można pobrać użytkownika.');
       return;
     }
@@ -106,7 +107,7 @@ export default function App() {
       name: taskName,
       date: taskDate.toISOString(),
       place: taskPlace,
-      creator_id: session.user.id,
+      creator_id: user.id,
     };
 
     if (geocoded) {
@@ -114,10 +115,12 @@ export default function App() {
       newTask.longitude = geocoded.longitude;
     }
     
-    const { error } = await supabase.from('tasks').insert([newTask]);
-
-    if (error) {
-      Alert.alert('Błąd', error.message);
+    setLoading(true);
+    const success = await addTask(newTask); // Dodajemy zadanie przy pomocy funkcji z kontekstu
+    setLoading(false);
+    
+    if (!success) {
+      Alert.alert('Błąd', 'Nie udało się dodać zadania.');
     } else {
       setTaskName('');
       setTaskDate(null);
@@ -156,7 +159,7 @@ export default function App() {
             onPress={() => setShowDatePicker(true)}
             style={[
               styles.input,
-              { borderColor: isTwoFocused ? colors.blue500 : colors.gray200 },
+              { borderColor: isTwoFocused ? colors.blue500 : colors.gray400 },
             ]}
             onPressIn={() => {
               setTwoFocused(true);

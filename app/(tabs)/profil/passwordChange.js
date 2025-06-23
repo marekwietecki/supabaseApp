@@ -14,9 +14,10 @@ import {
 import supabase from '../../../lib/supabase-client';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '../../../utils/colors'
-
+import { useAuth } from '../../../contexts/AuthContext';
 
 const ChangePasswordScreen = () => {
+  const { changePassword } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
@@ -25,29 +26,20 @@ const ChangePasswordScreen = () => {
   const [isTwoFocused, setTwoIsFocused] = useState(false);
 
   const handleChangePassword = async () => {
-    console.log('handleChangePassword pressed', newPassword, confirmPassword);
-
     if (newPassword !== confirmPassword) {
       Alert.alert('Błąd', 'Hasła nie są zgodne.');
       return;
     }
-    try {
-      // Używamy updateUser dla Supabase v2
-      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
-      console.log('Supabase updateUser response:', data, error);
 
-      if (error) {
-        Alert.alert('Błąd zmiany hasła', error.message);
-      } else {
-        Alert.alert('Sukces', 'Hasło zostało zmienione.', [
-          { text: 'OK', onPress: () => navigation.goBack() }  // po potwierdzeniu wracamy do profilu
-        ]);
-        setNewPassword('');
-        setConfirmPassword('');
-      }
-    } catch (e) {
-      console.error('Exception during updateUser:', e);
-      Alert.alert('Wyjątek', e.message);
+    try {
+      await changePassword(newPassword);
+      Alert.alert('Sukces', 'Hasło zostało zmienione.', [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      Alert.alert('Błąd zmiany hasła', error.message || 'Nieznany błąd');
     }
   };
 

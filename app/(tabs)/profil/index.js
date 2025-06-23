@@ -1,61 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import supabase from '../../../lib/supabase-client';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
 import { colors } from '../../../utils/colors'
+import { useAuth } from '../../../contexts/AuthContext';
 
 
 export default function App() {
-  const [user, setUser] = useState(null);
   const router = useRouter();
 
-  useEffect(() => {
-    let isMounted = true; // aby zapobiec aktualizacji stanu po odmontowaniu komponentu
-
-    // Sprawdzamy stan sieci
-    NetInfo.fetch().then((state) => {
-      if (state.isConnected && state.isInternetReachable !== false) {
-        // Jeżeli urządzenie jest online, pobieramy dane ze Supabase
-        supabase.auth.getUser().then(({ data: { user } }) => {
-          if (user) {
-            if (isMounted) {
-              setUser(user);
-            }
-            // Zapisujemy dane w AsyncStorage do późniejszego wykorzystania, gdy offline.
-            AsyncStorage.setItem('cachedUser', JSON.stringify(user));
-          } else {
-            Alert.alert('Error accessing User data');
-          }
-        });
-      } else {
-        // Jeżeli offline, próbujemy odczytać dane użytkownika z pamięci urządzenia (cache)
-        AsyncStorage.getItem('cachedUser')
-          .then((cachedUser) => {
-            if (cachedUser && isMounted) {
-              setUser(JSON.parse(cachedUser));
-            } else {
-              console.log('Brak zapisanych danych użytkownika lub brak połączenia.');
-            }
-          })
-          .catch((err) => console.error('Błąd przy odczycie cachedUser:', err));
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const doLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      Alert.alert('Error Signing Out User', error.message);
-    }
-  };
+  const { user, signOut } = useAuth();
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -87,7 +41,7 @@ export default function App() {
           <FontAwesome size={16} name="lock" color={colors.gray800} />
           <Text style={styles.buttonText}> Zmień Hasło</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={doLogout} style={styles.buttonContainer}>
+        <TouchableOpacity onPress={signOut} style={styles.buttonContainer}>
           <FontAwesome size={16} name="sign-out" color={colors.gray800} />
           <Text style={styles.buttonText}>Wyloguj się</Text>
         </TouchableOpacity>

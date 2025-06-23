@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Platform, Linking, TouchableOpacity } from 'react-native';
 import { Stack } from 'expo-router';
 import * as Location from 'expo-location';
-import supabase from '../../../lib/supabase-client';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { FontAwesome } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo'
-import { colors } from '../../../utils/colors'
-
-
+import { colors } from '../../../utils/colors';
+import { useTasks } from '../../../contexts/TasksContext';
 
 export default function LocationScreen() {
+    const { tasks, loadOfflineTasks } = useTasks();
     const [location, setLocation] = useState(null);
     const [address, setAddress] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
@@ -43,32 +42,23 @@ export default function LocationScreen() {
         return R * c;
     };
 
-    const findNearestTask = async (coords) => {
-        const { data: tasks, error } = await supabase
-            .from('tasks')
-            .select('id, name, place, latitude, longitude');
-
-        if (error || !tasks) {
-            console.error('Błąd pobierania zadań:', error);
-            return null;
-        }
-
-        const filtered = tasks.filter((t) => t.latitude && t.longitude);
-        if (filtered.length === 0) return null;
+    const findNearestTaskFromList = (coords) => {
+        const available = tasks.filter(t => t.latitude && t.longitude);
+        if (available.length === 0) return null;
 
         let nearest = null;
         let minDist = Infinity;
 
-        for (const task of filtered) {
+        for (const task of available) {
             const dist = calculateDistance(
-                coords.latitude,
-                coords.longitude,
-                task.latitude,
-                task.longitude
+            coords.latitude,
+            coords.longitude,
+            task.latitude,
+            task.longitude
             );
             if (dist < minDist) {
-                minDist = dist;
-                nearest = { ...task, distance: dist };
+            minDist = dist;
+            nearest = { ...task, distance: dist };
             }
         }
 
@@ -95,11 +85,13 @@ export default function LocationScreen() {
             console.log("Pobrana lokalizacja:", loc.coords);
             setLocation(loc);
 
-            // Szukamy najbliższego taska
-            const nearest = await findNearestTask(loc.coords);
+            if (tasks.length === 0) {
+                await loadOfflineTasks();
+            }
+
+            const nearest = await findNearestTaskFromList(loc.coords);
             console.log('Najbliższe zadanie:', nearest);
             setNearestTask(nearest);
-
 
             const reverseGeocode = await Location.reverseGeocodeAsync(loc.coords);
             console.log("Reverse geocode:", reverseGeocode);
@@ -155,8 +147,8 @@ export default function LocationScreen() {
           const lon = nearestTask.longitude;
           const label = nearestTask.place || nearestTask.name || "Task Location";
           const url = Platform.select({
-            ios: 'http://maps.apple.com/?ll=${lat},${lon}&q=${label}',
-            android: 'geo:${lat},${lon}?q=${lat},${lon}(${label})',
+            ios: `http://maps.apple.com/?ll=${lat},${lon}&q=${label}`,
+            android: `geo:${lat},${lon}?q=${lat},${lon}(${label})`,
           });
           Linking.openURL(url);
         } else {
@@ -213,25 +205,26 @@ export default function LocationScreen() {
                         </View>
                     ) : (
                         <View>    
-                            <View style={{ marginVertical: 8, flexDirection: 'row', justifyContent: 'center', alignContent: 'center', gap: 4 }}>
+                           <View style={{ marginVertical: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
                                 {address && (
-                                    <Text style={styles.mainText}>
+                                    <View style={{ maxWidth: '76%' }}>
+                                    <Text
+                                        style={styles.mainText}
+                                        numberOfLines={1}
+                                        ellipsizeMode="tail"
+                                    >
                                         📍 {address.city || address.subregion || address.region}, {address.country}
                                     </Text>
+                                    </View>
                                 )}
-                                <TouchableOpacity onPress={requestLocation} color={colors.blue500} style={{flexDirection: 'row', alignSelf: 'center', padding: 8}}>
-                                    <FontAwesome
-                                        name="rotate-left"
-                                        size={18}
-                                        color={colors.gray800}
-                                        style={styles.itemIcon}
-                                    />                   
-                                </TouchableOpacity> 
+                                <TouchableOpacity onPress={requestLocation} style={{ flexDirection: 'row', alignSelf: 'center', padding: 8 }}>
+                                    <FontAwesome name="rotate-left" size={18} color={colors.gray800} style={styles.itemIcon} />
+                                </TouchableOpacity>
                                 <TouchableOpacity onPress={() => setShowManualInput((prev) => !prev)} style={{ padding: 8, marginLeft: 8, marginRight: 5 }}>
                                     {showManualInput ? (
-                                        <FontAwesome name="chevron-up" size={18} color={colors.gray800} />
+                                    <FontAwesome name="chevron-up" size={18} color={colors.gray800} />
                                     ) : (
-                                        <FontAwesome name="pencil" size={18} color={colors.gray800} />
+                                    <FontAwesome name="pencil" size={18} color={colors.gray800} />
                                     )}
                                 </TouchableOpacity>
                             </View>
@@ -350,7 +343,7 @@ export default function LocationScreen() {
                         🔌 Brak połączenia z internetem
                     </Text>
                     <Text style={{ color: colors.gray800, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
-                        Nie możesz dodać zadania offline. Spróbuj ponownie po odzyskaniu połączenia.
+                        Nie możesz zobaczyć najbliższego zadania będąc offline. Spróbuj ponownie po odzyskaniu połączenia.
                     </Text>
                     </View>
                 )} 
