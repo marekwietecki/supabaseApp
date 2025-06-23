@@ -114,9 +114,10 @@ export const TasksProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('tasks')
         .insert([newTask])
+        .select()
         .single();
-      if (error) {
-        console.error('Błąd dodawania zadania:', error.message);
+      if (error || !data) {
+        console.error('Błąd dodawania zadania:', error?.message || 'Brak danych po dodaniu');
         return false;
       }
       setTasks((prev) => [...prev, data]);
